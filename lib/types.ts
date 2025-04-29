@@ -45,6 +45,8 @@ export interface UpdateUserDTO {
 export interface LibroRequestDTO {
     titulo: string;
     autor: string;
+    descripcion: string;
+    portada: string;
     tematicas: string[];
 }
 
@@ -52,6 +54,8 @@ export interface LibroResponseDTO {
     titulo: string;
     autor: string;
     estado: string;
+    descripcion: string;
+    portada: string;
     tematicas: string[];
     reservas: Reserva[];
 }
