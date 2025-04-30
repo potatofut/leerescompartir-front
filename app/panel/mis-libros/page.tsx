@@ -24,10 +24,8 @@ export default function MisLibros() {
   const [portadaPreview, setPortadaPreview] = useState<string | null>(null)
 
   useEffect(() => {
-    if (mostrarFormulario) {
-      cargarTematicas()
-    }
-  }, [mostrarFormulario])
+    cargarTematicas()
+  }, [])
 
   const cargarTematicas = async () => {
     setCargandoTematicas(true)
@@ -277,11 +275,14 @@ export default function MisLibros() {
                   <div className="mb-3">
                     <p className="text-sm font-medium text-orange-900">Temáticas:</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {libro.tematicas.map((tematica, i) => (
-                        <span key={i} className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
-                          {tematica}
-                        </span>
-                      ))}
+                        {libro.tematicas.map((tematicaId, i) => {
+                            const tematica = tematicasDisponibles.find(t => t.id === tematicaId);
+                            return (
+                            <span key={i} className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
+                                {tematica ? tematica.nombre : tematicaId}
+                            </span>
+                            );
+                        })}
                     </div>
                   </div>
                 )}
