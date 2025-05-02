@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useState, useContext, useEffect, type ReactNode } from "react"
-import { LoginResponseDTO, UpdateUserDTO } from '../../lib/types'
+import { LoginResponseDTO, LibroPrestamoDTO, LibroReservaRequestDTO } from '../../lib/types'
 import { AuthService } from '../../lib/auth'
 import { LibroService } from '../../lib/libros'
 import { LibroRequestDTO, LibroResponseDTO } from '../../lib/types'
@@ -9,6 +9,7 @@ import { LibroRequestDTO, LibroResponseDTO } from '../../lib/types'
 interface UserContextType {
     user: LoginResponseDTO | null
     libros: LibroResponseDTO[]
+    prestamos: LibroPrestamoDTO[]
     isLoggedIn: boolean
     login: (userData: LoginResponseDTO) => void
     logout: () => void
@@ -18,11 +19,15 @@ interface UserContextType {
     actualizarLibro: (indice: number, libro: LibroRequestDTO) => Promise<void>
     eliminarLibro: (indice: number) => Promise<void>
     cargarLibros: () => Promise<void>
+    cargarPrestamos: () => Promise<void>
+    devolverLibro: (libro: LibroReservaRequestDTO) => Promise<void>
+    reservar: (libro: LibroReservaRequestDTO) => Promise<void>
 }
 
 const UserContext = createContext<UserContextType>({
     user: null,
     libros: [],
+    prestamos: [],
     isLoggedIn: false,
     login: () => { },
     logout: () => { },
@@ -32,44 +37,15 @@ const UserContext = createContext<UserContextType>({
     actualizarLibro: async () => { },
     eliminarLibro: async () => { },
     cargarLibros: async () => { },
+    cargarPrestamos: async () => { },
+    devolverLibro: async () => { },
+    reservar: async () => { }
 })
-
-export const temas = [
-    {
-        id: "aventura",
-        nombre: "Aventura",
-        imagen:
-            "https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-        id: "historia",
-        nombre: "Historia",
-        imagen:
-            "https://images.unsplash.com/photo-1461360370896-922624d12aa1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-        id: "filosofia",
-        nombre: "Filosofía",
-        imagen:
-            "https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-        id: "ciencia-ficcion",
-        nombre: "Ciencia Ficción",
-        imagen:
-            "https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-        id: "programacion",
-        nombre: "Programación",
-        imagen:
-            "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-    },
-]
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<LoginResponseDTO | null>(null)
     const [libros, setLibros] = useState<LibroResponseDTO[]>([])
+    const [prestamos, setPrestamos] = useState<LibroPrestamoDTO[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -78,6 +54,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             try {
                 setUser(JSON.parse(storedUser))
                 cargarLibros() // Load books when user is loaded
+                cargarPrestamos()
             } catch (e) {
                 console.error('Failed to parse user data from storage')
             }
@@ -94,16 +71,44 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const cargarPrestamos = async () => {
+        try {
+            const prestamosData = await LibroService.prestamos()
+            setPrestamos(prestamosData)
+        } catch (error) {
+            console.error('Error loading loans:', error)
+        }
+    }
+
+    const devolverLibro = async (libro: LibroReservaRequestDTO) => {
+        try {
+            await LibroService.devolver(libro)
+            await cargarPrestamos() // Refresh the loans list after returning
+        } catch (error) {
+            console.error('Error returning book:', error)
+            throw error
+        }
+    }
+
+    const reservar = async (libro: LibroReservaRequestDTO) => {
+        try {
+            await LibroService.reservar(libro)
+            await cargarPrestamos() // Refresh books after reservation
+        } catch (error) {
+            console.error('Error making reservation:', error)
+            throw error
+        }
+    }
+
     const login = (userData: LoginResponseDTO) => {
         localStorage.setItem('user_data', JSON.stringify(userData))
         setUser(userData)
         cargarLibros()
+        cargarPrestamos()
     }
 
     const logout = () => {
         AuthService.logout()
-        setUser(null)
-        setLibros([])
     }
 
     const updateUserImage = async (imageBase64: string) => {
@@ -159,6 +164,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             value={{
                 user,
                 libros,
+                prestamos,
                 login,
                 logout,
                 isLoggedIn: !!user,
@@ -167,7 +173,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 agregarLibro,
                 actualizarLibro,
                 eliminarLibro,
-                cargarLibros
+                cargarLibros,
+                cargarPrestamos,
+                devolverLibro,
+                reservar
             }}
         >
             {children}

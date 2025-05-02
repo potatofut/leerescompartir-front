@@ -1,5 +1,5 @@
 import api from './api';
-import { LibroRequestDTO, LibroResponseDTO, TematicaDTO } from './types';
+import { LibroRequestDTO, LibroResponseDTO, TematicaDTO, LibroPrestamoDTO, LibroReservaRequestDTO, LibroDTO } from './types';
 
 export const LibroService = {
   agregar: async (libro: LibroRequestDTO): Promise<LibroResponseDTO> => {
@@ -9,6 +9,19 @@ export const LibroService = {
 
   listar: async (): Promise<LibroResponseDTO[]> => {
     const response = await api.get('/api/libros');
+    return response.data;
+  },
+
+  filtrar: async (
+    tematicaId?: string,
+    estado?: string,
+    pais?: string,
+    provincia?: string,
+    ciudad?: string
+  ): Promise<LibroDTO[]> => {
+    const response = await api.get('/api/libros/filtrar', {
+      params: { tematicaId, estado, pais, provincia, ciudad }
+    });
     return response.data;
   },
 
@@ -24,5 +37,18 @@ export const LibroService = {
   tematicas: async (): Promise<TematicaDTO[]> => {
     const response = await api.get('/api/tematicas');
     return response.data;
+  },
+
+  prestamos: async (): Promise<LibroPrestamoDTO[]> => {
+    const response = await api.get('/api/libros/prestados');
+    return response.data;
+  },
+
+  devolver: async (libro:LibroReservaRequestDTO): Promise<void> => {
+    await api.post('/api/libros/devolver', libro);
+  },
+
+  reservar: async (libro:LibroReservaRequestDTO): Promise<void> => {
+    await api.post('/api/libros/reservar', libro);
   }
 };

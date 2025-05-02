@@ -50,6 +50,20 @@ export interface LibroRequestDTO {
     tematicas: string[];
 }
 
+export interface LibroDTO{
+    titulo: string;
+    autor: string;
+    descripcion: string;
+    portada: string;
+    estado: string;
+    tematicas: string[];
+    reservas: Reserva[];
+    emailUsuario: string;
+    ciudadUsuario: string;
+    provinciaUsuario: string;
+    paisUsuario: string;
+}
+
 export interface LibroResponseDTO {
     titulo: string;
     autor: string;
@@ -61,8 +75,27 @@ export interface LibroResponseDTO {
 }
 
 export interface Reserva {
-    fecha: string;
-    usuario_id: string;
+    fechaReserva: Date;
+    fechaPrestamo: Date;
+    fechaDevolucion: Date;
+    emailUsuario: string;
+}
+
+export interface LibroPrestamoDTO {
+    titulo: string;
+    autor: string;
+    descripcion: string;
+    portada: string;
+    estado: string;
+    emailUsuario: string;
+    fechaReserva: Date;
+    fechaPrestamo: Date;
+    fechaDevolucion: Date;
+}
+
+export interface LibroReservaRequestDTO {
+    titulo: string;
+    emailUsuario: string;
 }
 
 export interface TematicaDTO {

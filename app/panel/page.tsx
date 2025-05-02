@@ -111,7 +111,7 @@ export default function Panel() {
         <div className="bg-white p-6 rounded-xl shadow-md border border-orange-200">
           <div className="text-xl font-semibold text-orange-700 mb-3">Mis Préstamos</div>
           <p className="text-gray-600 mb-4">Consulta los libros que tienes prestados actualmente</p>
-          <Link href="/prestamos" className="inline-block bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition duration-300">
+          <Link href="/panel/prestamos" className="inline-block bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition duration-300">
             Ver préstamos
           </Link>
         </div>

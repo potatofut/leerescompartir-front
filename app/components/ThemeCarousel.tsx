@@ -1,20 +1,34 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Slider from 'react-slick'
 import Image from 'next/image'
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
-
-const themes = [
-  { name: 'Aventura', image: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Historia', image: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Filosofía', image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Ciencia Ficción', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Programación', image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80' },
-]
+import { LibroService } from '../../lib/libros'
+import { TematicaDTO } from '../../lib/types'
 
 export default function ThemeCarousel() {
+  const [tematicas, setTematicas] = useState<TematicaDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchTematicas = async () => {
+      try {
+        const data = await LibroService.tematicas()
+        setTematicas(data)
+      } catch (err) {
+        setError('Error al cargar las temáticas')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTematicas()
+  }, [])
+
   const settings = {
     dots: true,
     infinite: true,
@@ -41,21 +55,33 @@ export default function ThemeCarousel() {
     ]
   }
 
+  if (loading) {
+    return <div className="text-center py-8">Cargando temáticas...</div>
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-500">{error}</div>
+  }
+
+  if (tematicas.length === 0) {
+    return <div className="text-center py-8">No hay temáticas disponibles</div>
+  }
+
   return (
     <div className="mb-16">
       <h2 className="text-3xl font-semibold mb-8 text-orange-700 text-center">Explora por Temática</h2>
       <Slider {...settings}>
-        {themes.map((theme, index) => (
-          <div key={index} className="px-2">
+        {tematicas.map((tematica) => (
+          <div key={tematica.id} className="px-2">
             <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
               <Image
-                src={theme.image}
-                alt={theme.name}
+                src={tematica.imagen}
+                alt={tematica.nombre}
                 layout="fill"
                 objectFit="cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                <h3 className="text-white text-2xl font-bold">{theme.name}</h3>
+                <h3 className="text-white text-2xl font-bold">{tematica.nombre}</h3>
               </div>
             </div>
           </div>

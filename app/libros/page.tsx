@@ -1,41 +1,73 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useUser } from "../context/UserContext"
-import { temas } from "../context/UserContext"
+import { LibroService } from '../../lib/libros'
+import { TematicaDTO, LibroDTO } from '../../lib/types'
 
 export default function Libros() {
-  const { user, librosDisponibles, removeLibro, solicitarPrestamo } = useUser()
+  const { user, libros, prestamos, isLoggedIn, reservar, cargarLibros } = useUser()
   const [temaSeleccionado, setTemaSeleccionado] = useState<string | null>(null)
+  const [temas, setTemas] = useState<TematicaDTO[]>([])
+  const [librosDisponibles, setLibrosDisponibles] = useState<LibroDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleEliminarLibro = (id: string) => {
-    if (confirm("¿Estás seguro de que quieres eliminar este libro?")) {
-      removeLibro(id)
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        // Load themes
+        const temasData = await LibroService.tematicas()
+        setTemas(temasData)
+
+        // Load available books
+        const librosData = await LibroService.filtrar()
+        const disponibles = librosData.filter(libro => libro.estado === "disponible")
+        setLibrosDisponibles(disponibles)
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  const handleSolicitarPrestamo = (libro: any) => {
-    if (confirm(`¿Deseas solicitar el préstamo de "${libro.titulo}"?`)) {
-      solicitarPrestamo(libro)
-      alert("¡Préstamo solicitado con éxito! Puedes ver el libro en tu sección de 'Préstamos recibidos'.")
+    cargarDatos()
+  }, [])
+
+  const handleSolicitarReserva = async (libro: LibroDTO) => {
+    if (!user) return
+    
+    if (confirm(`¿Deseas solicitar la reserva de "${libro.titulo}"?`)) {
+      try {
+        await reservar({
+          titulo: libro.titulo,
+          emailUsuario: libro.emailUsuario,
+        })
+        alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
+        
+        // Refresh books after reservation
+        const librosData = await LibroService.filtrar()
+        const disponibles = librosData.filter(libro => libro.estado === "disponible")
+        setLibrosDisponibles(disponibles)
+      } catch (error) {
+        alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
+        console.error("Reservation error:", error)
+      }
     }
   }
 
   // Filtrar libros por tema si hay uno seleccionado
   const librosFiltrados = temaSeleccionado
-    ? librosDisponibles.filter((libro) => {
-        // Aquí deberíamos tener una propiedad tema en los libros, pero como no la tenemos,
-        // vamos a simular la filtración basada en el título o descripción
-        const temaActual = temas.find((t) => t.id === temaSeleccionado)
-        if (!temaActual) return false
-
-        return (
-          libro.titulo.toLowerCase().includes(temaActual.nombre.toLowerCase()) ||
-          libro.descripcion.toLowerCase().includes(temaActual.nombre.toLowerCase())
-        )
-      })
+    ? librosDisponibles.filter((libro) => libro.tematicas.includes(temaSeleccionado))
     : librosDisponibles
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p>Cargando libros disponibles...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -93,7 +125,7 @@ export default function Libros() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {librosFiltrados.map((libro) => (
-              <div key={libro.id} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+              <div key={libro.titulo} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
                 <div className="relative h-64 mb-4 rounded overflow-hidden">
                   <Image src={libro.portada || "/placeholder.svg"} alt={libro.titulo} layout="fill" objectFit="cover" />
                 </div>
@@ -117,31 +149,21 @@ export default function Libros() {
                           ? "Prestado"
                           : "No disponible"}
                     </span>
-                    <span className="text-sm text-orange-700">Usuario: {libro.propietario}</span>
                   </div>
 
-                  {libro.estado === "prestado" && libro.fechaDevolucion && (
+                  {libro.reservas && libro.reservas.length > 0 && (
                     <p className="text-sm text-orange-900 mt-2">
-                      <span className="font-medium">Disponible a partir de:</span> {libro.fechaDevolucion}
+                      <span className="font-medium">Reservas:</span> {libro.reservas.length}
                     </p>
                   )}
 
                   <div className="flex justify-between mt-2">
-                    {user.isLoggedIn && libro.estado === "disponible" && (
+                    {isLoggedIn && libro.estado === "disponible" && (
                       <button
-                        onClick={() => handleSolicitarPrestamo(libro)}
-                        className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition duration-300 mr-2"
+                        onClick={() => handleSolicitarReserva(libro)}
+                        className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition duration-300"
                       >
-                        Solicitar préstamo
-                      </button>
-                    )}
-
-                    {user.isLoggedIn && user.name === libro.propietario && (
-                      <button
-                        onClick={() => handleEliminarLibro(libro.id)}
-                        className="bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition duration-300"
-                      >
-                        Eliminar
+                        Solicitar reserva
                       </button>
                     )}
                   </div>
