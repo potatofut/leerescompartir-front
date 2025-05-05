@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState, useContext, useEffect, type ReactNode } from "react"
+import { createContext, useState, useContext, useEffect, type ReactNode, useCallback } from "react"
 import { LoginResponseDTO, LibroPrestamoDTO, LibroReservaRequestDTO } from '../../lib/types'
 import { AuthService } from '../../lib/auth'
 import { LibroService } from '../../lib/libros'
@@ -47,43 +47,63 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const [libros, setLibros] = useState<LibroResponseDTO[]>([])
     const [prestamos, setPrestamos] = useState<LibroPrestamoDTO[]>([])
     const [loading, setLoading] = useState(true)
+    const [isClient, setIsClient] = useState(false)
 
+    // Detect client-side rendering
     useEffect(() => {
-        const storedUser = localStorage.getItem('user_data')
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser))
-                cargarLibros() // Load books when user is loaded
-                cargarPrestamos()
-            } catch (e) {
-                console.error('Failed to parse user data from storage')
-            }
-        }
-        setLoading(false)
+        setIsClient(true)
     }, [])
 
-    const cargarLibros = async () => {
+    // Load user data from localStorage only on client-side
+    useEffect(() => {
+        if (isClient) {
+            const storedUser = localStorage.getItem('user_data')
+            if (storedUser) {
+                try {
+                    const userData = JSON.parse(storedUser)
+                    setUser(userData)
+                } catch (e) {
+                    console.error('Failed to parse user data from storage')
+                }
+            }
+            setLoading(false)
+        }
+    }, [isClient])
+
+    // Load books and loans when user is logged in
+    useEffect(() => {
+        if (user && isClient) {
+            cargarLibros()
+            cargarPrestamos()
+        }
+    }, [user, isClient])
+
+    const cargarLibros = useCallback(async () => {
+        if (!user) return
+
         try {
             const librosData = await LibroService.listar()
             setLibros(librosData)
         } catch (error) {
             console.error('Error loading books:', error)
         }
-    }
+    }, [user])
 
-    const cargarPrestamos = async () => {
+    const cargarPrestamos = useCallback(async () => {
+        if (!user) return
+
         try {
             const prestamosData = await LibroService.prestamos()
             setPrestamos(prestamosData)
         } catch (error) {
             console.error('Error loading loans:', error)
         }
-    }
+    }, [user])
 
     const devolverLibro = async (libro: LibroReservaRequestDTO) => {
         try {
             await LibroService.devolver(libro)
-            await cargarPrestamos() // Refresh the loans list after returning
+            cargarPrestamos() // Refresh the loans list after returning
         } catch (error) {
             console.error('Error returning book:', error)
             throw error
@@ -93,29 +113,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const reservar = async (libro: LibroReservaRequestDTO) => {
         try {
             await LibroService.reservar(libro)
-            await cargarPrestamos() // Refresh books after reservation
+            cargarPrestamos() // Refresh books after reservation
         } catch (error) {
             console.error('Error making reservation:', error)
             throw error
         }
     }
 
-    const login = (userData: LoginResponseDTO) => {
-        localStorage.setItem('user_data', JSON.stringify(userData))
+    const login = useCallback((userData: LoginResponseDTO) => {
+        if (isClient) {
+            localStorage.setItem('user_data', JSON.stringify(userData))
+        }
         setUser(userData)
-        cargarLibros()
-        cargarPrestamos()
-    }
+    }, [isClient])
 
-    const logout = () => {
-        AuthService.logout()
-    }
+    const logout = useCallback(() => {
+        try {
+            // Primero limpiar los datos en localStorage
+            if (isClient) {
+                localStorage.removeItem('user_data')
+            }
+            
+            // Llamar al servicio de autenticación
+            // Nota: movido después de limpiar localStorage para evitar problemas
+            // si AuthService.logout() depende del estado actual
+            AuthService.logout()
+        } catch (error) {
+            console.error('Error durante el logout:', error)
+        } finally {
+            // Siempre actualizar el estado, incluso si hay errores
+            setUser(null)
+            setLibros([])
+            setPrestamos([])
+        }
+    }, [isClient])
 
     const updateUserImage = async (imageBase64: string) => {
         if (user) {
             try {
                 const newUserData = { ...user, imagen: imageBase64 }
-                localStorage.setItem('user_data', JSON.stringify(newUserData))
+                if (isClient) {
+                    localStorage.setItem('user_data', JSON.stringify(newUserData))
+                }
                 setUser(newUserData)
                 return Promise.resolve()
             } catch (error) {
@@ -129,7 +168,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const agregarLibro = async (libro: LibroRequestDTO) => {
         try {
             const nuevoLibro = await LibroService.agregar(libro)
-            setLibros([...libros, nuevoLibro])
+            setLibros(prevLibros => [...prevLibros, nuevoLibro])
         } catch (error) {
             console.error('Error adding book:', error)
             throw error
@@ -139,9 +178,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const actualizarLibro = async (indice: number, libro: LibroRequestDTO) => {
         try {
             const libroActualizado = await LibroService.actualizar(indice, libro)
-            const nuevosLibros = [...libros]
-            nuevosLibros[indice] = libroActualizado
-            setLibros(nuevosLibros)
+            setLibros(prevLibros => {
+                const nuevosLibros = [...prevLibros]
+                nuevosLibros[indice] = libroActualizado
+                return nuevosLibros
+            })
         } catch (error) {
             console.error('Error updating book:', error)
             throw error
@@ -151,8 +192,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const eliminarLibro = async (indice: number) => {
         try {
             await LibroService.eliminar(indice)
-            const nuevosLibros = libros.filter((_, i) => i !== indice)
-            setLibros(nuevosLibros)
+            setLibros(prevLibros => prevLibros.filter((_, i) => i !== indice))
         } catch (error) {
             console.error('Error deleting book:', error)
             throw error

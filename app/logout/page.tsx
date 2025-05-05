@@ -9,11 +9,23 @@ export default function Logout() {
   const { logout } = useUser()
 
   useEffect(() => {
-    // Cerrar sesión
-    logout()
-
-    // Redirigir al inicio
-    router.push("/")
+    // Definir una función para gestionar el logout
+    const handleLogout = async () => {
+      try {
+        // Cerrar sesión
+        logout()
+        
+        // Redirigir al inicio
+        router.push("/")
+      } catch (error) {
+        console.error("Error durante el cierre de sesión:", error)
+        // Redirigir al inicio incluso si hay un error
+        router.push("/")
+      }
+    }
+    
+    // Llamar a la función de logout
+    handleLogout()
   }, [logout, router])
 
   return (
