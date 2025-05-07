@@ -1,5 +1,6 @@
 import api from './api';
-import { LibroRequestDTO, LibroResponseDTO, TematicaDTO, LibroPrestamoDTO, LibroReservaRequestDTO, LibroDTO } from './types';
+import { LibroRequestDTO, LibroResponseDTO, TematicaDTO, CambioEstadoRequest,
+         LibroPrestamoDTO, LibroReservaRequestDTO, LibroDTO } from './types';
 
 export const LibroService = {
   agregar: async (libro: LibroRequestDTO): Promise<LibroResponseDTO> => {
@@ -50,5 +51,10 @@ export const LibroService = {
 
   reservar: async (libro:LibroReservaRequestDTO): Promise<void> => {
     await api.post('/api/libros/reservar', libro);
+  },
+
+  cambiarEstado: async (indice: number, estado: CambioEstadoRequest): Promise<LibroResponseDTO> => {
+    const response = await api.put('/api/libros/' + indice +'/estado', estado);
+    return response.data;
   }
 };

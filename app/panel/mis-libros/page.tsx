@@ -5,11 +5,11 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { useUser } from "../../context/UserContext"
 import { LibroService } from "../../../lib/libros"
-import { useRouter } from "next/navigation"
-import { TematicaDTO } from "../../../lib/types"
+import { TematicaDTO, LibroResponseDTO } from "../../../lib/types"
 
 export default function MisLibros() {
-  const { user, libros, agregarLibro, eliminarLibro, isLoggedIn, loading } = useUser()
+  const { libros, agregarLibro, eliminarLibro, 
+          isLoggedIn, loading, cargarLibros, cargarPrestamos } = useUser()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [nuevoLibro, setNuevoLibro] = useState({
     titulo: "",
@@ -25,6 +25,8 @@ export default function MisLibros() {
 
   useEffect(() => {
     cargarTematicas()
+    cargarLibros()
+    cargarPrestamos()
   }, [])
 
   const cargarTematicas = async () => {
@@ -114,6 +116,40 @@ export default function MisLibros() {
         alert("Error al eliminar el libro. Por favor intenta nuevamente.")
       }
     }
+  }
+
+  const cambiarEstadoLibro = async (indice: number, nuevoEstado: string) => {
+    try {
+      // Mostrar confirmación antes de cambiar el estado
+      if (!confirm(`¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`)) {
+        return;
+      }
+      
+      // Llamar al servicio para cambiar el estado
+      await LibroService.cambiarEstado(indice, { nuevoEstado });
+      
+      // Recargar los datos desde el servidor
+      await cargarLibros();
+      await cargarPrestamos();
+      
+      // Mostrar mensaje de éxito
+      alert(`✅ Estado del libro cambiado a "${nuevoEstado}" correctamente`);
+    } catch (error) {
+      console.error("Error al cambiar el estado del libro:", error);
+      alert("❌ Error al cambiar el estado del libro. Por favor intenta nuevamente.");
+    }
+  };
+
+  // Función para obtener la última fecha de devolución si el libro está prestado
+  const obtenerFechaDevolucion = (libro: LibroResponseDTO) => {
+    if (libro.estado === "prestado" && libro.reservas && libro.reservas.length > 0) {
+      // Ordenar reservas por fecha de devolución (más reciente primero)
+      const reservasOrdenadas = [...libro.reservas].sort((a, b) => 
+        new Date(b.fechaDevolucion).getTime() - new Date(a.fechaDevolucion).getTime()
+      )
+      return reservasOrdenadas[0].fechaDevolucion
+    }
+    return null
   }
 
   if (loading) {
@@ -258,61 +294,110 @@ export default function MisLibros() {
           <p className="text-center text-orange-900 py-8">No has subido ningún libro todavía.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {libros.map((libro, index) => (
-              <div key={index} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
-                <div className="relative h-64 mb-4 rounded overflow-hidden">
-                  <Image 
-                    src={libro.portada || "/placeholder.svg"} 
-                    alt={libro.titulo} 
-                    layout="fill" 
-                    objectFit="cover" 
-                  />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-orange-800">{libro.titulo}</h3>
-                <p className="text-orange-900 mb-2">Autor: {libro.autor}</p>
-                <p className="text-orange-900 mb-4 line-clamp-2">{libro.descripcion}</p>
-                {libro.tematicas && libro.tematicas.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-sm font-medium text-orange-900">Temáticas:</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                        {libro.tematicas.map((tematicaId, i) => {
-                            const tematica = tematicasDisponibles.find(t => t.id === tematicaId);
-                            return (
-                            <span key={i} className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
-                                {tematica ? tematica.nombre : tematicaId}
-                            </span>
-                            );
-                        })}
+            {libros.map((libro, index) => {
+              const fechaDevolucion = obtenerFechaDevolucion(libro)
+              return (
+                <div key={index} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+                  <div className="relative h-64 mb-4 rounded overflow-hidden">
+                    <Image 
+                      src={libro.portada || "/placeholder.svg"} 
+                      alt={libro.titulo} 
+                      layout="fill" 
+                      objectFit="cover" 
+                    />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-orange-800">{libro.titulo}</h3>
+                  <p className="text-orange-900 mb-2">Autor: {libro.autor}</p>
+                  <p className="text-orange-900 mb-4 line-clamp-2">{libro.descripcion}</p>
+                  {libro.tematicas && libro.tematicas.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-orange-900">Temáticas:</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                          {libro.tematicas.map((tematicaId, i) => {
+                              const tematica = tematicasDisponibles.find(t => t.id === tematicaId)
+                              return (
+                              <span key={i} className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
+                                  {tematica ? tematica.nombre : tematicaId}
+                              </span>
+                              )
+                          })}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          libro.estado === "disponible"
+                            ? "bg-green-100 text-green-800"
+                            : libro.estado === "reservado"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : libro.estado === "prestado"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {libro.estado === "disponible"
+                          ? "Disponible"
+                          : libro.estado === "reservado"
+                            ? "Reservado"
+                            : libro.estado === "prestado"
+                              ? "Prestado"
+                              : "No disponible"}
+                      </span>
+                      <button
+                        onClick={() => handleEliminarLibro(index)}
+                        className="text-red-500 hover:text-red-700 transition duration-300"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+
+                    {fechaDevolucion && (
+                      <p className="text-sm text-orange-900">
+                        <span className="font-medium">Fecha de devolución:</span> {new Date(fechaDevolucion).toLocaleDateString()}
+                      </p>
+                    )}
+
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-orange-900">Cambiar estado:</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          onClick={() => cambiarEstadoLibro(index, "disponible")}
+                          className={`text-xs py-1 px-2 rounded ${
+                            libro.estado === "disponible"
+                              ? "bg-green-500 text-white"
+                              : "bg-green-100 text-green-800 hover:bg-green-200"
+                          }`}
+                        >
+                          Disponible
+                        </button>
+                        <button
+                          onClick={() => cambiarEstadoLibro(index, "reservado")}
+                          className={`text-xs py-1 px-2 rounded ${
+                            libro.estado === "reservado"
+                              ? "bg-yellow-500 text-white"
+                              : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                          }`}
+                        >
+                          Reservado
+                        </button>
+                        <button
+                          onClick={() => cambiarEstadoLibro(index, "prestado")}
+                          className={`text-xs py-1 px-2 rounded ${
+                            libro.estado === "prestado"
+                              ? "bg-blue-500 text-white"
+                              : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          }`}
+                        >
+                          Prestado
+                        </button>
+                      </div>
                     </div>
                   </div>
-                )}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        libro.estado === "disponible"
-                          ? "bg-green-100 text-green-800"
-                          : libro.estado === "prestado"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {libro.estado === "disponible"
-                        ? "Disponible"
-                        : libro.estado === "prestado"
-                          ? "Prestado"
-                          : "No disponible"}
-                    </span>
-                    <button
-                      onClick={() => handleEliminarLibro(index)}
-                      className="text-red-500 hover:text-red-700 transition duration-300"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

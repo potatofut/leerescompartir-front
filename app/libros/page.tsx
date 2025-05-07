@@ -7,7 +7,7 @@ import { LibroService } from '../../lib/libros'
 import { TematicaDTO, LibroDTO } from '../../lib/types'
 
 export default function Libros() {
-  const { user, libros, prestamos, isLoggedIn, reservar, cargarLibros } = useUser()
+  const { user, isLoggedIn, reservar, cargarLibros, cargarPrestamos } = useUser()
   const [temaSeleccionado, setTemaSeleccionado] = useState<string | null>(null)
   const [temas, setTemas] = useState<TematicaDTO[]>([])
   const [librosDisponibles, setLibrosDisponibles] = useState<LibroDTO[]>([])
@@ -24,6 +24,10 @@ export default function Libros() {
         const librosData = await LibroService.filtrar()
         const disponibles = librosData.filter(libro => libro.estado === "disponible")
         setLibrosDisponibles(disponibles)
+
+        await cargarLibros();
+        await cargarPrestamos();
+
       } catch (error) {
         console.error("Error loading data:", error)
       } finally {

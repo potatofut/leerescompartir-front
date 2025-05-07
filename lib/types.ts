@@ -81,6 +81,10 @@ export interface Reserva {
     emailUsuario: string;
 }
 
+export interface CambioEstadoRequest {
+    nuevoEstado: string; // disponible, prestado, reservado
+}
+
 export interface LibroPrestamoDTO {
     titulo: string;
     autor: string;
