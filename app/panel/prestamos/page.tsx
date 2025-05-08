@@ -50,7 +50,7 @@ export default function MisPrestamos() {
                     <span className="font-medium">
                       {prestamo.fechaPrestamo ? 'Fecha de préstamo:' : 'Fecha de reserva:'}
                     </span>{" "}
-                    {(prestamo.fechaPrestamo || prestamo.fechaReserva).toLocaleString()}
+                    {new Date(prestamo.fechaPrestamo || prestamo.fechaReserva).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </p>
                   {prestamo.fechaPrestamo && (
                     <p className="text-sm text-orange-900">
