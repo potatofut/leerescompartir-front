@@ -56,9 +56,6 @@ export default function UserMenu() {
           <Link href="/panel/prestamos" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
             Mis préstamos
           </Link>
-          <Link href="/panel/prestamos-recibidos" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
-            Préstamos recibidos
-          </Link>
           <Link href="/panel/datos-usuario" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
             Datos personales
           </Link>

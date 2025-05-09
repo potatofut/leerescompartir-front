@@ -56,5 +56,10 @@ export const LibroService = {
   cambiarEstado: async (indice: number, estado: CambioEstadoRequest): Promise<LibroResponseDTO> => {
     const response = await api.put('/api/libros/' + indice +'/estado', estado);
     return response.data;
-  }
+  },
+
+    buscar: async (query: string): Promise<LibroDTO[]> => {
+        const response = await api.get('/api/libros/buscar', { params: { query } });
+        return response.data;
+    },
 };

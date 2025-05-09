@@ -34,7 +34,7 @@ export default function MisPrestamos() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {prestamos.map((prestamo) => (
-              <div key={`${prestamo.titulo}-${prestamo.fechaPrestamo || prestamo.fechaReserva}`} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+              <div key={`${prestamo.titulo}-${prestamo.fechaDevolucion || prestamo.fechaPrestamo || prestamo.fechaReserva}`} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
                 <div className="relative h-48 mb-4 rounded overflow-hidden">
                   <Image
                     src={prestamo.portada || "/placeholder.svg"}
@@ -48,13 +48,17 @@ export default function MisPrestamos() {
                 <div className="space-y-2 mb-4">
                   <p className="text-sm text-orange-900">
                     <span className="font-medium">
-                      {prestamo.fechaPrestamo ? 'Fecha de préstamo:' : 'Fecha de reserva:'}
+                      {prestamo.fechaDevolucion ? 'Fecha de devolución'
+                                                : prestamo.fechaPrestamo ? 'Fecha de préstamo:' 
+                                                                         : 'Fecha de reserva:'}
                     </span>{" "}
-                    {new Date(prestamo.fechaPrestamo || prestamo.fechaReserva).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    {new Date(prestamo.fechaDevolucion || prestamo.fechaPrestamo || prestamo.fechaReserva).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </p>
-                  {prestamo.fechaPrestamo && (
+                  {prestamo.fechaDevolucion && (
                     <p className="text-sm text-orange-900">
-                      <span className="font-medium">Fecha de devolución:</span> {prestamo.fechaDevolucion.toLocaleString()}
+                      <span className="font-medium">Fecha de devolución:</span> 
+                      { new Date(prestamo.fechaDevolucion)
+                                .toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </p>
                   )}
                 </div>

@@ -162,7 +162,7 @@ export default function Libros() {
                   )}
 
                   <div className="flex justify-between mt-2">
-                    {isLoggedIn && libro.estado === "disponible" && (
+                    {isLoggedIn && user?.email !== libro.emailUsuario && libro.estado === "disponible" && (
                       <button
                         onClick={() => handleSolicitarReserva(libro)}
                         className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition duration-300"

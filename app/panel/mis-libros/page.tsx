@@ -120,6 +120,12 @@ export default function MisLibros() {
 
   const cambiarEstadoLibro = async (indice: number, nuevoEstado: string) => {
     try {
+
+      if(nuevoEstado === libros[indice].estado) {
+        alert(`El libro ya está en estado "${nuevoEstado}"`);
+        return;
+      }
+
       // Mostrar confirmación antes de cambiar el estado
       if (!confirm(`¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`)) {
         return;
@@ -139,18 +145,6 @@ export default function MisLibros() {
       alert("❌ Error al cambiar el estado del libro. Por favor intenta nuevamente.");
     }
   };
-
-  // Función para obtener la última fecha de devolución si el libro está prestado
-  const obtenerFechaDevolucion = (libro: LibroResponseDTO) => {
-    if (libro.estado === "prestado" && libro.reservas && libro.reservas.length > 0) {
-      // Ordenar reservas por fecha de devolución (más reciente primero)
-      const reservasOrdenadas = [...libro.reservas].sort((a, b) => 
-        new Date(b.fechaDevolucion).getTime() - new Date(a.fechaDevolucion).getTime()
-      )
-      return reservasOrdenadas[0].fechaDevolucion
-    }
-    return null
-  }
 
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>
@@ -295,7 +289,6 @@ export default function MisLibros() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {libros.map((libro, index) => {
-              const fechaDevolucion = obtenerFechaDevolucion(libro)
               return (
                 <div key={index} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
                   <div className="relative h-64 mb-4 rounded overflow-hidden">
@@ -330,8 +323,6 @@ export default function MisLibros() {
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
                           libro.estado === "disponible"
                             ? "bg-green-100 text-green-800"
-                            : libro.estado === "reservado"
-                              ? "bg-yellow-100 text-yellow-800"
                               : libro.estado === "prestado"
                                 ? "bg-blue-100 text-blue-800"
                                 : "bg-red-100 text-red-800"
@@ -339,11 +330,9 @@ export default function MisLibros() {
                       >
                         {libro.estado === "disponible"
                           ? "Disponible"
-                          : libro.estado === "reservado"
-                            ? "Reservado"
                             : libro.estado === "prestado"
                               ? "Prestado"
-                              : "No disponible"}
+                              : "Reservado"}
                       </span>
                       <button
                         onClick={() => handleEliminarLibro(index)}
@@ -353,9 +342,21 @@ export default function MisLibros() {
                       </button>
                     </div>
 
-                    {fechaDevolucion && (
+                    {libro.estado === 'reservado' && libro.reservas.at(-1)?.fechaReserva &&
+                     (
                       <p className="text-sm text-orange-900">
-                        <span className="font-medium">Fecha de devolución:</span> {new Date(fechaDevolucion).toLocaleDateString()}
+                        <span className="font-medium">Fecha de reserva: </span> 
+                        { new Date(libro.reservas.at(-1)!.fechaReserva)
+                                .toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </p>
+                    )}
+
+                    {libro.estado === 'prestado' && libro.reservas.at(-1)?.fechaPrestamo && 
+                     (
+                      <p className="text-sm text-orange-900">
+                        <span className="font-medium">Fecha de préstamo: </span> 
+                        { new Date(libro.reservas.at(-1)!.fechaPrestamo)
+                            .toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                       </p>
                     )}
 
@@ -371,16 +372,6 @@ export default function MisLibros() {
                           }`}
                         >
                           Disponible
-                        </button>
-                        <button
-                          onClick={() => cambiarEstadoLibro(index, "reservado")}
-                          className={`text-xs py-1 px-2 rounded ${
-                            libro.estado === "reservado"
-                              ? "bg-yellow-500 text-white"
-                              : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                          }`}
-                        >
-                          Reservado
                         </button>
                         <button
                           onClick={() => cambiarEstadoLibro(index, "prestado")}
