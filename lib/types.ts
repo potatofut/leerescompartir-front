@@ -7,7 +7,15 @@ export interface LoginResponseDTO {
     id: string;
     nombre: string;
     email: string;
+    ciudad: string;
+    provincia: string;
+    pais: string;
+    continente: string;
     imagen?: string;
+    cp?: string;
+    telefono?: string;
+    biografia?: string;
+    intereses?: string;
 }
 
 export interface RegistroRequestDTO {
@@ -39,7 +47,15 @@ export interface Usuario {
 export interface UpdateUserDTO {
     nombre: string;
     email: string;
+    ciudad: string;
+    provincia: string;
+    pais: string;
+    continente: string;
     imagen?: string;
+    cp?: string;
+    telefono?: string;
+    biografia?: string;
+    intereses?: string;
 }
 
 export interface LibroRequestDTO {

@@ -72,6 +72,10 @@ export default function Panel() {
       const updateData = {
         nombre: user.nombre,
         email: user.email,
+        ciudad: user.ciudad,
+        provincia: user.provincia,
+        pais: user.pais,
+        continente: user.continente,
         imagen: profileImage
       }
       
@@ -119,7 +123,7 @@ export default function Panel() {
         <div className="bg-white p-6 rounded-xl shadow-md border border-orange-200">
           <div className="text-xl font-semibold text-orange-700 mb-3">Datos Personales</div>
           <p className="text-gray-600 mb-4">Completa tu información de ubicación y preferencias</p>
-          <Link href="/editar-perfil" className="inline-block bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition duration-300">
+          <Link href="/panel/datos-usuario" className="inline-block bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition duration-300">
             Editar datos
           </Link>
         </div>

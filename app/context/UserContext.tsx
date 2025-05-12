@@ -4,7 +4,7 @@ import { createContext, useState, useContext, useEffect, type ReactNode, useCall
 import { LoginResponseDTO, LibroPrestamoDTO, LibroReservaRequestDTO } from '../../lib/types'
 import { AuthService } from '../../lib/auth'
 import { LibroService } from '../../lib/libros'
-import { LibroRequestDTO, LibroResponseDTO } from '../../lib/types'
+import { LibroRequestDTO, LibroResponseDTO, UpdateUserDTO, Usuario } from '../../lib/types'
 
 interface UserContextType {
     user: LoginResponseDTO | null
@@ -15,6 +15,7 @@ interface UserContextType {
     logout: () => void
     loading: boolean
     updateUserImage: (imageBase64: string) => Promise<void>
+    updateProfile: (userData: UpdateUserDTO) => Promise<Usuario>
     agregarLibro: (libro: LibroRequestDTO) => Promise<void>
     actualizarLibro: (indice: number, libro: LibroRequestDTO) => Promise<void>
     eliminarLibro: (indice: number) => Promise<void>
@@ -33,6 +34,7 @@ const UserContext = createContext<UserContextType>({
     logout: () => { },
     loading: true,
     updateUserImage: async () => { },
+    updateProfile: async () => { return {} as Usuario },
     agregarLibro: async () => { },
     actualizarLibro: async () => { },
     eliminarLibro: async () => { },
@@ -165,6 +167,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return Promise.reject(new Error('No user logged in'))
     }
 
+    const updateProfile = useCallback(async (userData: UpdateUserDTO) => {
+        if (!user) throw new Error('No user logged in');
+        
+        try {
+            const updatedUser = await AuthService.updateProfile(userData);
+            const newUserData = { ...user, ...updatedUser };
+            
+            setUser(newUserData);
+            return updatedUser;
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            throw error;
+        }
+        }, [user, isClient]);
+
     const agregarLibro = async (libro: LibroRequestDTO) => {
         try {
             const nuevoLibro = await LibroService.agregar(libro)
@@ -210,6 +227,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 isLoggedIn: !!user,
                 loading,
                 updateUserImage,
+                updateProfile,
                 agregarLibro,
                 actualizarLibro,
                 eliminarLibro,
