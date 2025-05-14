@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useUser } from "../context/UserContext"
 import { LibroService } from '../../lib/libros'
 import { TematicaDTO, LibroDTO } from '../../lib/types'
+import { useSearchParams } from 'next/navigation'
 
 export default function Libros() {
   const { user, isLoggedIn, reservar, cargarLibros, cargarPrestamos } = useUser()
@@ -12,6 +13,14 @@ export default function Libros() {
   const [temas, setTemas] = useState<TematicaDTO[]>([])
   const [librosDisponibles, setLibrosDisponibles] = useState<LibroDTO[]>([])
   const [loading, setLoading] = useState(true)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const temaFromUrl = searchParams.get('tema')
+    if (temaFromUrl) {
+      setTemaSeleccionado(temaFromUrl)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const cargarDatos = async () => {

@@ -295,7 +295,7 @@ export default function DatosUsuario() {
               >
                 <option value="">Selecciona un país</option>
                 {paises.map((pais) => (
-                  <option key={pais} value={pais} selected={pais === formData.pais}>
+                  <option key={pais} value={pais}>
                     {pais}
                   </option>
                 ))}

@@ -7,11 +7,13 @@ import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
 import { LibroService } from '../../lib/libros'
 import { TematicaDTO } from '../../lib/types'
+import { useRouter } from 'next/navigation'
 
 export default function ThemeCarousel() {
   const [tematicas, setTematicas] = useState<TematicaDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const fetchTematicas = async () => {
@@ -28,6 +30,10 @@ export default function ThemeCarousel() {
 
     fetchTematicas()
   }, [])
+
+  const handleTematicaClick = (tematicaId: string) => {
+    router.push(`/libros?tema=${tematicaId}`)
+  }
 
   const settings = {
     dots: true,
@@ -73,7 +79,10 @@ export default function ThemeCarousel() {
       <Slider {...settings}>
         {tematicas.map((tematica) => (
           <div key={tematica.id} className="px-2">
-            <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+            <div 
+              className="relative h-64 rounded-xl overflow-hidden shadow-lg cursor-pointer"
+              onClick={() => handleTematicaClick(tematica.id)}
+            >
               <Image
                 src={tematica.imagen}
                 alt={tematica.nombre}
