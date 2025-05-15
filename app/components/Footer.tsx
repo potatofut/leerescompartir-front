@@ -19,13 +19,18 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-4">Contacto</h4>
+            <h4 className="text-lg font-semibold mb-4">Legal</h4>
+            <ul className="space-y-2">
+              <li><Link href="/terms" className="hover:text-orange-700 transition duration-300">Términos del Servicio</Link></li>
+              <li><Link href="/privacidad" className="hover:text-orange-700 transition duration-300">Política de Privacidad</Link></li>
+            </ul>
+            <h4 className="text-lg font-semibold mt-4 mb-2">Contacto</h4>
             <p>Email: info@leerescompartir.com</p>
             <p>Teléfono: (123) 456-7890</p>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-orange-200 text-center">
-          <p>&copy; 2023 Leer es compartir. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Leer es compartir. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
