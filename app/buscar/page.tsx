@@ -8,7 +8,13 @@ import { LibroService } from "../../lib/libros"
 import { useUser } from "../context/UserContext"
 import { LibroDTO, TematicaDTO } from "../../lib/types"
 
+/**
+ * Componente de búsqueda de libros que permite a los usuarios buscar y reservar libros
+ * @component
+ * @returns {JSX.Element} Componente de búsqueda de libros
+ */
 export default function Buscar() {
+  // Estados para manejar la búsqueda y resultados
   const [busqueda, setBusqueda] = useState("")
   const [resultados, setResultados] = useState<LibroDTO[]>([])
   const [tematicasDisponibles, setTematicasDisponibles] = useState<TematicaDTO[]>([])
@@ -17,22 +23,30 @@ export default function Buscar() {
   const [error, setError] = useState<string | null>(null)
   const { user, isLoggedIn, reservar } = useUser()
 
+  // Cargar temáticas al montar el componente
   useEffect(() => {
       cargarTematicas()
     }, [])
 
-    const cargarTematicas = async () => {
-        setCargandoTematicas(true)
-        try {
-            const tematicas = await LibroService.tematicas()
-            setTematicasDisponibles(tematicas)
-        } catch (error) {
-            console.error("Error cargando temáticas:", error)
-        } finally {
-            setCargandoTematicas(false)
-        }
-        }
+  /**
+   * Carga las temáticas disponibles desde el servicio
+   */
+  const cargarTematicas = async () => {
+    setCargandoTematicas(true)
+    try {
+        const tematicas = await LibroService.tematicas()
+        setTematicasDisponibles(tematicas)
+    } catch (error) {
+        console.error("Error cargando temáticas:", error)
+    } finally {
+        setCargandoTematicas(false)
+    }
+  }
 
+  /**
+   * Maneja el envío del formulario de búsqueda
+   * @param {React.FormEvent} e - Evento del formulario
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -59,34 +73,39 @@ export default function Buscar() {
     }
   }
 
+  /**
+   * Maneja la solicitud de reserva de un libro
+   * @param {LibroDTO} libro - Libro a reservar
+   */
   const handleSolicitarReserva = async (libro: LibroDTO) => {
-      
-      if (confirm(`¿Deseas solicitar la reserva de "${libro.titulo}"?`)) {
-        try {
-          await reservar({
-            titulo: libro.titulo,
-            emailUsuario: libro.emailUsuario,
-          })
-          alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
-          
-          // Refresh books after reservation
-          const librosEncontrados = await LibroService.buscar(busqueda)
-          setResultados(librosEncontrados)
-          if (librosEncontrados.length === 0) {
-            setError("No se encontraron libros con ese criterio de búsqueda")
-          }
-          
-        } catch (error) {
-          alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
-          console.error("Reservation error:", error)
+    if (confirm(`¿Deseas solicitar la reserva de "${libro.titulo}"?`)) {
+      try {
+        await reservar({
+          titulo: libro.titulo,
+          emailUsuario: libro.emailUsuario,
+        })
+        alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
+        
+        // Actualizar la lista de libros después de la reserva
+        const librosEncontrados = await LibroService.buscar(busqueda)
+        setResultados(librosEncontrados)
+        if (librosEncontrados.length === 0) {
+          setError("No se encontraron libros con ese criterio de búsqueda")
         }
+        
+      } catch (error) {
+        alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
+        console.error("Reservation error:", error)
       }
     }
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* Encabezado de la página */}
       <h1 className="text-4xl font-bold mb-8 text-center text-orange-800">Buscar Libros</h1>
 
+      {/* Formulario de búsqueda */}
       <div className="max-w-2xl mx-auto mb-12">
         <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
           <input
@@ -106,13 +125,16 @@ export default function Buscar() {
         </form>
       </div>
 
+      {/* Contenedor de resultados */}
       <div className="bg-white p-8 rounded-xl shadow-lg border border-orange-200">
         <h2 className="text-2xl font-semibold mb-6 text-orange-700">Resultados de la búsqueda</h2>
 
+        {/* Mensaje de error si existe */}
         {error && (
           <p className="text-center text-red-600 mb-4">{error}</p>
         )}
 
+        {/* Estados de carga y resultados */}
         {isLoading ? (
           <div className="text-center py-10">
             <p className="text-orange-600">Buscando libros...</p>
@@ -120,9 +142,11 @@ export default function Buscar() {
         ) : resultados.length === 0 && !error ? (
           <p className="text-center text-orange-900">Realiza una búsqueda para ver resultados.</p>
         ) : (
+          // Grid de resultados de libros
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {resultados.map((libro, index) => (
               <div key={index} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+                {/* Imagen de portada del libro */}
                 <div className="relative h-48 mb-4 rounded overflow-hidden">
                   <Image 
                     src={libro.portada || "/placeholder.svg"} 
@@ -131,6 +155,7 @@ export default function Buscar() {
                     className="object-cover"
                   />
                 </div>
+                {/* Información del libro */}
                 <h3 className="text-xl font-semibold mb-2 text-orange-800">{libro.titulo}</h3>
                 <p className="text-orange-900 mb-2">Autor: {libro.autor}</p>
                 <p className="text-orange-900 mb-2">
@@ -143,6 +168,7 @@ export default function Buscar() {
                     {libro.estado === "disponible" ? "Disponible" : "No disponible"}
                   </span>
                 </p>
+                {/* Temáticas del libro */}
                 {libro.tematicas && libro.tematicas.length > 0 && (
                   <div className="mt-2">
                     <p className="text-sm text-orange-700">Temáticas:</p>
@@ -158,6 +184,7 @@ export default function Buscar() {
                     </div>
                   </div>
                 )}
+                {/* Botón de reserva (solo visible si el usuario está logueado y el libro está disponible) */}
                 {isLoggedIn && user?.email !== libro.emailUsuario && libro.estado === "disponible" && (
                   <button
                     className="mt-4 w-full bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition duration-300"
