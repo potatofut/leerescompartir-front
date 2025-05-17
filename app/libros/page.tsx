@@ -6,6 +6,7 @@ import { useUser } from "../context/UserContext"
 import { LibroService } from '../../lib/libros'
 import { TematicaDTO, LibroDTO } from '../../lib/types'
 import { useSearchParams } from 'next/navigation'
+import { RegionService } from '../../lib/regions'
 
 export default function Libros() {
   const { user, isLoggedIn, reservar, cargarLibros, cargarPrestamos } = useUser()
@@ -14,6 +15,16 @@ export default function Libros() {
   const [librosDisponibles, setLibrosDisponibles] = useState<LibroDTO[]>([])
   const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
+
+  // Estados para los filtros de región
+  const [continentes, setContinentes] = useState<string[]>([])
+  const [paises, setPaises] = useState<string[]>([])
+  const [provincias, setProvincias] = useState<string[]>([])
+  const [ciudades, setCiudades] = useState<string[]>([])
+  const [continenteSeleccionado, setContinenteSeleccionado] = useState<string>("")
+  const [paisSeleccionado, setPaisSeleccionado] = useState<string>("")
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("")
+  const [ciudadSeleccionada, setCiudadSeleccionada] = useState<string>("")
 
   useEffect(() => {
     const temaFromUrl = searchParams.get('tema')
@@ -29,10 +40,12 @@ export default function Libros() {
         const temasData = await LibroService.tematicas()
         setTemas(temasData)
 
+        // Load regions
+        const continentesData = await RegionService.getContinentes()
+        setContinentes(continentesData)
+
         // Load available books
-        const librosData = await LibroService.filtrar()
-        const disponibles = librosData.filter(libro => libro.estado === "disponible")
-        setLibrosDisponibles(disponibles)
+        await cargarLibrosFiltrados()
 
         await cargarLibros();
         await cargarPrestamos();
@@ -47,6 +60,103 @@ export default function Libros() {
     cargarDatos()
   }, [])
 
+  const cargarLibrosFiltrados = async () => {
+    try {
+      const librosData = await LibroService.filtrar(
+        undefined, // tematicaId
+        "disponible", // estado
+        paisSeleccionado || undefined,
+        provinciaSeleccionada || undefined,
+        ciudadSeleccionada || undefined
+      )
+      setLibrosDisponibles(librosData)
+    } catch (error) {
+      console.error("Error loading filtered books:", error)
+    }
+  }
+
+  const handleContinenteChange = async (continente: string) => {
+    setContinenteSeleccionado(continente)
+    setPaisSeleccionado("")
+    setProvinciaSeleccionada("")
+    setCiudadSeleccionada("")
+    
+    if (continente) {
+      try {
+        const paisesData = await RegionService.getPaisesPorContinente(continente)
+        setPaises(paisesData)
+        setProvincias([])
+        setCiudades([])
+      } catch (error) {
+        console.error("Error loading countries:", error)
+      }
+    } else {
+      setPaises([])
+      setProvincias([])
+      setCiudades([])
+      await cargarLibrosFiltrados()
+    }
+  }
+
+  const handlePaisChange = async (pais: string) => {
+    setPaisSeleccionado(pais)
+    setProvinciaSeleccionada("")
+    setCiudadSeleccionada("")
+    
+    if (pais && continenteSeleccionado) {
+      try {
+        const provinciasData = await RegionService.getProvinciasPorPais(continenteSeleccionado, pais)
+        setProvincias(provinciasData)
+        setCiudades([])
+        await cargarLibrosFiltrados()
+      } catch (error) {
+        console.error("Error loading provinces:", error)
+      }
+    } else {
+      setProvincias([])
+      setCiudades([])
+      await cargarLibrosFiltrados()
+    }
+  }
+
+  const handleProvinciaChange = async (provincia: string) => {
+    setProvinciaSeleccionada(provincia)
+    setCiudadSeleccionada("")
+    
+    if (provincia && continenteSeleccionado && paisSeleccionado) {
+      try {
+        const ciudadesData = await RegionService.getCiudadesPorProvincia(
+          continenteSeleccionado, 
+          paisSeleccionado, 
+          provincia
+        )
+        setCiudades(ciudadesData)
+        await cargarLibrosFiltrados()
+      } catch (error) {
+        console.error("Error loading cities:", error)
+      }
+    } else {
+      setCiudades([])
+      await cargarLibrosFiltrados()
+    }
+  }
+
+  const handleCiudadChange = async (ciudad: string) => {
+    setCiudadSeleccionada(ciudad)
+    await cargarLibrosFiltrados()
+  }
+
+  const limpiarFiltrosRegion = async () => {
+    setContinenteSeleccionado("")
+    setPaisSeleccionado("")
+    setProvinciaSeleccionada("")
+    setCiudadSeleccionada("")
+    setPaises([])
+    setProvincias([])
+    setCiudades([])
+    await cargarLibrosFiltrados()
+  }
+
   const handleSolicitarReserva = async (libro: LibroDTO) => {
     if (!user) return
     
@@ -59,9 +169,7 @@ export default function Libros() {
         alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
         
         // Refresh books after reservation
-        const librosData = await LibroService.filtrar()
-        const disponibles = librosData.filter(libro => libro.estado === "disponible")
-        setLibrosDisponibles(disponibles)
+        await cargarLibrosFiltrados()
       } catch (error) {
         alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
         console.error("Reservation error:", error)
@@ -85,6 +193,107 @@ export default function Libros() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8 text-center text-orange-800">Libros Disponibles</h1>
+
+      {/* Sección de filtros por región */}
+      <div className="mb-8 bg-white p-6 rounded-lg shadow-md border border-orange-200">
+        <h2 className="text-xl font-semibold mb-4 text-orange-700">Filtrar por ubicación</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Selector de continente */}
+          <div>
+            <label htmlFor="continente" className="block text-sm font-medium text-orange-800 mb-1">
+              Continente
+            </label>
+            <select
+              id="continente"
+              value={continenteSeleccionado}
+              onChange={(e) => handleContinenteChange(e.target.value)}
+              className="w-full p-2 border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value="">Seleccione un continente</option>
+              {continentes.map((continente) => (
+                <option key={continente} value={continente}>
+                  {continente}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selector de país */}
+          <div>
+            <label htmlFor="pais" className="block text-sm font-medium text-orange-800 mb-1">
+              País
+            </label>
+            <select
+              id="pais"
+              value={paisSeleccionado}
+              onChange={(e) => handlePaisChange(e.target.value)}
+              disabled={!continenteSeleccionado}
+              className="w-full p-2 border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+            >
+              <option value="">Seleccione un país</option>
+              {paises.map((pais) => (
+                <option key={pais} value={pais}>
+                  {pais}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selector de provincia */}
+          <div>
+            <label htmlFor="provincia" className="block text-sm font-medium text-orange-800 mb-1">
+              Provincia/Estado
+            </label>
+            <select
+              id="provincia"
+              value={provinciaSeleccionada}
+              onChange={(e) => handleProvinciaChange(e.target.value)}
+              disabled={!paisSeleccionado}
+              className="w-full p-2 border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+            >
+              <option value="">Seleccione una provincia</option>
+              {provincias.map((provincia) => (
+                <option key={provincia} value={provincia}>
+                  {provincia}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selector de ciudad */}
+          <div>
+            <label htmlFor="ciudad" className="block text-sm font-medium text-orange-800 mb-1">
+              Ciudad
+            </label>
+            <select
+              id="ciudad"
+              value={ciudadSeleccionada}
+              onChange={(e) => handleCiudadChange(e.target.value)}
+              disabled={!provinciaSeleccionada}
+              className="w-full p-2 border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+            >
+              <option value="">Seleccione una ciudad</option>
+              {ciudades.map((ciudad) => (
+                <option key={ciudad} value={ciudad}>
+                  {ciudad}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {(continenteSeleccionado || paisSeleccionado || provinciaSeleccionada || ciudadSeleccionada) && (
+          <div className="mt-4">
+            <button
+              onClick={limpiarFiltrosRegion}
+              className="bg-orange-100 text-orange-800 py-2 px-4 rounded-lg font-medium hover:bg-orange-200 transition duration-300"
+            >
+              Limpiar filtros de ubicación
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Sección de temáticas */}
       <div className="mb-10">
@@ -122,6 +331,11 @@ export default function Libros() {
           {temaSeleccionado
             ? `Libros de ${temas.find((t) => t.id === temaSeleccionado)?.nombre || ""}`
             : "Todos los libros"}
+          {(paisSeleccionado || provinciaSeleccionada || ciudadSeleccionada) && (
+            <span className="text-lg font-normal ml-2">
+              en {ciudadSeleccionada || provinciaSeleccionada || paisSeleccionado}
+            </span>
+          )}
         </h2>
 
         {librosFiltrados.length === 0 ? (
@@ -132,6 +346,9 @@ export default function Libros() {
                     temas.find((t) => t.id === temaSeleccionado)?.nombre || ""
                   }`
                 : "No hay libros disponibles actualmente"}
+              {(paisSeleccionado || provinciaSeleccionada || ciudadSeleccionada) && (
+                <span> en {ciudadSeleccionada || provinciaSeleccionada || paisSeleccionado}</span>
+              )}
             </p>
             <p className="text-orange-700">Vuelve más tarde o regístrate para compartir tus propios libros.</p>
           </div>
@@ -161,6 +378,9 @@ export default function Libros() {
                         : libro.estado === "prestado"
                           ? "Prestado"
                           : "No disponible"}
+                    </span>
+                    <span className="text-sm text-orange-800">
+                      {libro.ciudadUsuario}, {libro.provinciaUsuario}
                     </span>
                   </div>
 
