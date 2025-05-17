@@ -7,9 +7,15 @@ import { useUser } from "../../context/UserContext"
 import { LibroService } from "../../../lib/libros"
 import { TematicaDTO, LibroResponseDTO } from "../../../lib/types"
 
+/**
+ * Página de gestión de libros del usuario
+ * Permite agregar, eliminar y gestionar el estado de los libros
+ */
 export default function MisLibros() {
   const { libros, agregarLibro, eliminarLibro, 
           isLoggedIn, loading, cargarLibros, cargarPrestamos } = useUser()
+  
+  // Estados para el formulario de nuevo libro
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [nuevoLibro, setNuevoLibro] = useState({
     titulo: "",
@@ -23,12 +29,16 @@ export default function MisLibros() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [portadaPreview, setPortadaPreview] = useState<string | null>(null)
 
+  // Cargar datos iniciales
   useEffect(() => {
     cargarTematicas()
     cargarLibros()
     cargarPrestamos()
   }, [])
 
+  /**
+   * Carga las temáticas disponibles desde el servicio
+   */
   const cargarTematicas = async () => {
     setCargandoTematicas(true)
     try {
@@ -41,6 +51,11 @@ export default function MisLibros() {
     }
   }
 
+  /**
+   * Maneja el cambio de imagen de portada
+   * Convierte la imagen a base64 para previsualización y almacenamiento
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del input de archivo
+   */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -58,11 +73,19 @@ export default function MisLibros() {
     }
   }
 
+  /**
+   * Maneja los cambios en los campos de texto del formulario
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>} e - Evento del input
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setNuevoLibro((prev) => ({ ...prev, [name]: value }))
   }
 
+  /**
+   * Maneja la selección/deselección de temáticas
+   * @param {string} tematica - ID de la temática a toggle
+   */
   const handleTematicaChange = (tematica: string) => {
     setNuevoLibro(prev => {
       if (prev.tematicas.includes(tematica)) {
@@ -79,6 +102,10 @@ export default function MisLibros() {
     })
   }
 
+  /**
+   * Maneja el envío del formulario de nuevo libro
+   * @param {React.FormEvent} e - Evento del formulario
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -91,7 +118,7 @@ export default function MisLibros() {
         tematicas: nuevoLibro.tematicas
       })
 
-      // Reset form
+      // Reiniciar formulario
       setNuevoLibro({
         titulo: "",
         autor: "",
@@ -107,6 +134,10 @@ export default function MisLibros() {
     }
   }
 
+  /**
+   * Maneja la eliminación de un libro
+   * @param {number} indice - Índice del libro a eliminar
+   */
   const handleEliminarLibro = async (indice: number) => {
     if (confirm("¿Estás seguro de que quieres eliminar este libro?")) {
       try {
@@ -118,27 +149,30 @@ export default function MisLibros() {
     }
   }
 
+  /**
+   * Cambia el estado de un libro (disponible, prestado, reservado)
+   * @param {number} indice - Índice del libro
+   * @param {string} nuevoEstado - Nuevo estado a asignar
+   */
   const cambiarEstadoLibro = async (indice: number, nuevoEstado: string) => {
     try {
-
       if(nuevoEstado === libros[indice].estado) {
         alert(`El libro ya está en estado "${nuevoEstado}"`);
         return;
       }
 
-      // Mostrar confirmación antes de cambiar el estado
+      // Confirmar cambio de estado
       if (!confirm(`¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`)) {
         return;
       }
       
-      // Llamar al servicio para cambiar el estado
+      // Actualizar estado en el servidor
       await LibroService.cambiarEstado(indice, { nuevoEstado });
       
-      // Recargar los datos desde el servidor
+      // Recargar datos
       await cargarLibros();
       await cargarPrestamos();
       
-      // Mostrar mensaje de éxito
       alert(`✅ Estado del libro cambiado a "${nuevoEstado}" correctamente`);
     } catch (error) {
       console.error("Error al cambiar el estado del libro:", error);
@@ -146,6 +180,7 @@ export default function MisLibros() {
     }
   };
 
+  // Estados de carga y autenticación
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>
   }
@@ -158,6 +193,7 @@ export default function MisLibros() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8 text-center text-orange-800">Mis Libros</h1>
 
+      {/* Botón para mostrar/ocultar formulario */}
       <div className="mb-8 flex justify-end">
         <button
           onClick={() => setMostrarFormulario(!mostrarFormulario)}
@@ -167,11 +203,13 @@ export default function MisLibros() {
         </button>
       </div>
 
+      {/* Formulario de nuevo libro */}
       {mostrarFormulario && (
         <div className="bg-white p-8 rounded-xl shadow-lg border border-orange-200 mb-8">
           <h2 className="text-2xl font-semibold mb-6 text-orange-700">Subir nuevo libro</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Campos de texto */}
               <div className="space-y-6">
                 <div>
                   <label htmlFor="titulo" className="block text-lg font-medium text-orange-900 mb-2">
@@ -215,6 +253,7 @@ export default function MisLibros() {
                     required
                   />
                 </div>
+                {/* Selector de temáticas */}
                 <div>
                   <label className="block text-lg font-medium text-orange-900 mb-2">
                     Temáticas
@@ -241,6 +280,7 @@ export default function MisLibros() {
                   )}
                 </div>
               </div>
+              {/* Selector de imagen */}
               <div className="flex flex-col items-center justify-center">
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -269,6 +309,7 @@ export default function MisLibros() {
                 <p className="mt-2 text-sm text-orange-600">Formato recomendado: JPG, PNG</p>
               </div>
             </div>
+            {/* Botón de guardar */}
             <div className="flex justify-end">
               <button
                 type="submit"
@@ -281,6 +322,7 @@ export default function MisLibros() {
         </div>
       )}
 
+      {/* Lista de libros */}
       <div className="bg-white p-8 rounded-xl shadow-lg border border-orange-200">
         <h2 className="text-2xl font-semibold mb-6 text-orange-700">Libros subidos</h2>
 
@@ -291,6 +333,7 @@ export default function MisLibros() {
             {libros.map((libro, index) => {
               return (
                 <div key={index} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+                  {/* Imagen de portada */}
                   <div className="relative h-64 mb-4 rounded overflow-hidden">
                     <Image 
                       src={libro.portada || "/placeholder.svg"} 
@@ -299,9 +342,11 @@ export default function MisLibros() {
                       objectFit="cover" 
                     />
                   </div>
+                  {/* Información del libro */}
                   <h3 className="text-xl font-semibold mb-2 text-orange-800">{libro.titulo}</h3>
                   <p className="text-orange-900 mb-2">Autor: {libro.autor}</p>
                   <p className="text-orange-900 mb-4 line-clamp-2">{libro.descripcion}</p>
+                  {/* Temáticas */}
                   {libro.tematicas && libro.tematicas.length > 0 && (
                     <div className="mb-3">
                       <p className="text-sm font-medium text-orange-900">Temáticas:</p>
@@ -317,6 +362,7 @@ export default function MisLibros() {
                       </div>
                     </div>
                   )}
+                  {/* Estado y acciones */}
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <span
@@ -342,6 +388,7 @@ export default function MisLibros() {
                       </button>
                     </div>
 
+                    {/* Fechas de reserva/préstamo */}
                     {libro.estado === 'reservado' && libro.reservas.at(-1)?.fechaReserva &&
                      (
                       <p className="text-sm text-orange-900">
@@ -360,6 +407,7 @@ export default function MisLibros() {
                       </p>
                     )}
 
+                    {/* Botones de cambio de estado */}
                     <div className="flex flex-col gap-2">
                       <p className="text-sm font-medium text-orange-900">Cambiar estado:</p>
                       <div className="grid grid-cols-3 gap-2">

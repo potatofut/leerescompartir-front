@@ -4,17 +4,26 @@ import Link from "next/link"
 import UserMenu from "./UserMenu"
 import { useUser } from "../context/UserContext"
 
+/**
+ * Componente Header que muestra la navegación principal de la aplicación
+ * Incluye el logo, menú de navegación y opciones de autenticación
+ * Se adapta según si el usuario está autenticado o no
+ */
 export default function Header() {
   const { isLoggedIn } = useUser()
 
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+        {/* Logo y nombre de la aplicación */}
         <Link href="/" className="text-2xl font-semibold text-orange-700 hover:text-orange-600 transition duration-300">
           Leer es compartir
         </Link>
+
+        {/* Menú de navegación principal */}
         <nav className="flex items-center">
           <ul className="flex space-x-6 items-center">
+            {/* Enlaces de navegación comunes */}
             <li>
               <Link href="/" className="text-orange-900 hover:text-orange-700 transition duration-300">
                 Inicio
@@ -31,8 +40,10 @@ export default function Header() {
               </Link>
             </li>
 
+            {/* Renderizado condicional según estado de autenticación */}
             {!isLoggedIn ? (
               <>
+                {/* Opciones para usuarios no autenticados */}
                 <li>
                   <Link href="/login" className="text-orange-900 hover:text-orange-700 transition duration-300">
                     Iniciar Sesión
@@ -48,6 +59,7 @@ export default function Header() {
                 </li>
               </>
             ) : (
+              // Menú de usuario para usuarios autenticados
               <li>
                 <UserMenu />
               </li>

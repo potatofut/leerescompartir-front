@@ -9,36 +9,54 @@ import { useUser } from "../context/UserContext"
 import { useRouter } from "next/navigation"
 import { AuthService } from "../../lib/auth"
 
+/**
+ * Página principal del panel de usuario
+ * Permite gestionar el perfil, libros y préstamos
+ * Incluye funcionalidad para actualizar la imagen de perfil y datos personales
+ */
 export default function Panel() {
+  // Obtener datos y funciones del contexto de usuario
   const { user, updateUserImage, isLoggedIn } = useUser()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Default profile image if none exists
+  // Estados para la gestión de la imagen de perfil
   const [profileImage, setProfileImage] = useState("/default-profile.png")
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   
-  // Redirect if not logged in
+  /**
+   * Redirige al usuario a la página de login si no está autenticado
+   */
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
     }
   }, [isLoggedIn, router])
   
-  // Update profile image when user data changes
+  /**
+   * Actualiza la imagen de perfil cuando cambian los datos del usuario
+   */
   useEffect(() => {
     if (user?.imagen) {
       setProfileImage(user.imagen)
     }
   }, [user])
 
+  /**
+   * Maneja el clic en la imagen de perfil para abrir el selector de archivos
+   */
   const handleImageClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click()
     }
   }
 
+  /**
+   * Procesa el cambio de imagen de perfil
+   * Convierte la imagen a base64 y actualiza el estado
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del input de archivo
+   */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -62,6 +80,10 @@ export default function Panel() {
     }
   }
 
+  /**
+   * Guarda los cambios del perfil en el servidor
+   * Actualiza la imagen y datos personales
+   */
   const handleSaveChanges = async () => {
     if (!user) return
     
@@ -94,7 +116,7 @@ export default function Panel() {
     }
   }
 
-  // Show loading or redirect if not logged in
+  // Mostrar estado de carga si no hay datos del usuario
   if (!user) {
     return <div className="container mx-auto px-4 py-12 text-center">Cargando...</div>
   }
@@ -103,7 +125,9 @@ export default function Panel() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-orange-700 text-center mb-8">Mi Perfil</h1>
       
+      {/* Tarjetas de navegación */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        {/* Tarjeta de Mis Libros */}
         <div className="bg-white p-6 rounded-xl shadow-md border border-orange-200">
           <div className="text-xl font-semibold text-orange-700 mb-3">Mis Libros</div>
           <p className="text-gray-600 mb-4">Gestiona tus libros disponibles para préstamo</p>
@@ -112,6 +136,7 @@ export default function Panel() {
           </Link>
         </div>
 
+        {/* Tarjeta de Mis Préstamos */}
         <div className="bg-white p-6 rounded-xl shadow-md border border-orange-200">
           <div className="text-xl font-semibold text-orange-700 mb-3">Mis Préstamos</div>
           <p className="text-gray-600 mb-4">Consulta los libros que te han prestado</p>
@@ -120,6 +145,7 @@ export default function Panel() {
           </Link>
         </div>
 
+        {/* Tarjeta de Datos Personales */}
         <div className="bg-white p-6 rounded-xl shadow-md border border-orange-200">
           <div className="text-xl font-semibold text-orange-700 mb-3">Datos Personales</div>
           <p className="text-gray-600 mb-4">Completa tu información de ubicación y preferencias</p>
@@ -129,8 +155,10 @@ export default function Panel() {
         </div>
       </div>
 
+      {/* Sección de perfil */}
       <div className="bg-white p-8 rounded-xl shadow-md border border-orange-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Imagen de perfil */}
           <div className="flex flex-col items-center">
             <div 
               className={`relative w-48 h-48 rounded-full overflow-hidden cursor-pointer mb-4 border-4 border-orange-300 ${isUploading ? 'opacity-50' : ''}`}
@@ -159,11 +187,13 @@ export default function Panel() {
             </p>
           </div>
 
+          {/* Información personal */}
           <div>
             <h2 className="text-2xl font-semibold text-orange-700 mb-6">
               Información personal
             </h2>
             <div className="space-y-4">
+              {/* Nombre */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-500 text-sm mb-1">
                   Nombre
@@ -173,6 +203,7 @@ export default function Panel() {
                 </p>
               </div>
 
+              {/* Email */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-500 text-sm mb-1">
                   Email
@@ -182,6 +213,7 @@ export default function Panel() {
                 </p>
               </div>
 
+              {/* Botón de guardar */}
               <button 
                 onClick={handleSaveChanges}
                 disabled={isUploading || isSaving}

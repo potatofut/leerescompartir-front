@@ -6,6 +6,10 @@ import { AuthService } from '../../lib/auth'
 import { LibroService } from '../../lib/libros'
 import { LibroRequestDTO, LibroResponseDTO, UpdateUserDTO, Usuario } from '../../lib/types'
 
+/**
+ * Interfaz que define la estructura del contexto de usuario
+ * Incluye el estado del usuario, libros, préstamos y métodos para gestionarlos
+ */
 interface UserContextType {
     user: LoginResponseDTO | null
     libros: LibroResponseDTO[]
@@ -25,6 +29,7 @@ interface UserContextType {
     reservar: (libro: LibroReservaRequestDTO) => Promise<void>
 }
 
+// Contexto con valores por defecto
 const UserContext = createContext<UserContextType>({
     user: null,
     libros: [],
@@ -44,19 +49,25 @@ const UserContext = createContext<UserContextType>({
     reservar: async () => { }
 })
 
+/**
+ * Proveedor del contexto de usuario que maneja el estado global de la aplicación
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.children - Componentes hijos que tendrán acceso al contexto
+ */
 export function UserProvider({ children }: { children: ReactNode }) {
+    // Estados principales
     const [user, setUser] = useState<LoginResponseDTO | null>(null)
     const [libros, setLibros] = useState<LibroResponseDTO[]>([])
     const [prestamos, setPrestamos] = useState<LibroPrestamoDTO[]>([])
     const [loading, setLoading] = useState(true)
     const [isClient, setIsClient] = useState(false)
 
-    // Detect client-side rendering
+    // Detectar renderizado del lado del cliente
     useEffect(() => {
         setIsClient(true)
     }, [])
 
-    // Load user data from localStorage only on client-side
+    // Cargar datos del usuario desde localStorage solo en el cliente
     useEffect(() => {
         if (isClient) {
             const storedUser = localStorage.getItem('user_data')
@@ -72,7 +83,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, [isClient])
 
-    // Load books and loans when user is logged in
+    // Cargar libros y préstamos cuando el usuario está autenticado
     useEffect(() => {
         if (user && isClient) {
             cargarLibros()
@@ -80,6 +91,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, [user, isClient])
 
+    /**
+     * Carga la lista de libros del usuario
+     */
     const cargarLibros = useCallback(async () => {
         if (!user) return
 
@@ -91,6 +105,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, [user])
 
+    /**
+     * Carga la lista de préstamos del usuario
+     */
     const cargarPrestamos = useCallback(async () => {
         if (!user) return
 
@@ -102,26 +119,38 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, [user])
 
+    /**
+     * Registra la devolución de un libro
+     * @param {LibroReservaRequestDTO} libro - Datos del libro a devolver
+     */
     const devolverLibro = async (libro: LibroReservaRequestDTO) => {
         try {
             await LibroService.devolver(libro)
-            cargarPrestamos() // Refresh the loans list after returning
+            cargarPrestamos() // Actualizar lista de préstamos
         } catch (error) {
             console.error('Error returning book:', error)
             throw error
         }
     }
 
+    /**
+     * Registra la reserva de un libro
+     * @param {LibroReservaRequestDTO} libro - Datos del libro a reservar
+     */
     const reservar = async (libro: LibroReservaRequestDTO) => {
         try {
             await LibroService.reservar(libro)
-            cargarPrestamos() // Refresh books after reservation
+            cargarPrestamos() // Actualizar lista de préstamos
         } catch (error) {
             console.error('Error making reservation:', error)
             throw error
         }
     }
 
+    /**
+     * Inicia sesión del usuario y guarda sus datos
+     * @param {LoginResponseDTO} userData - Datos del usuario
+     */
     const login = useCallback((userData: LoginResponseDTO) => {
         if (isClient) {
             localStorage.setItem('user_data', JSON.stringify(userData))
@@ -129,27 +158,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser(userData)
     }, [isClient])
 
+    /**
+     * Cierra la sesión del usuario y limpia sus datos
+     */
     const logout = useCallback(() => {
         try {
-            // Primero limpiar los datos en localStorage
+            // Limpiar datos en localStorage
             if (isClient) {
                 localStorage.removeItem('user_data')
             }
             
             // Llamar al servicio de autenticación
-            // Nota: movido después de limpiar localStorage para evitar problemas
-            // si AuthService.logout() depende del estado actual
             AuthService.logout()
         } catch (error) {
             console.error('Error durante el logout:', error)
         } finally {
-            // Siempre actualizar el estado, incluso si hay errores
+            // Limpiar estado
             setUser(null)
             setLibros([])
             setPrestamos([])
         }
     }, [isClient])
 
+    /**
+     * Actualiza la imagen de perfil del usuario
+     * @param {string} imageBase64 - Imagen en formato base64
+     */
     const updateUserImage = async (imageBase64: string) => {
         if (user) {
             try {
@@ -167,6 +201,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return Promise.reject(new Error('No user logged in'))
     }
 
+    /**
+     * Actualiza el perfil del usuario
+     * @param {UpdateUserDTO} userData - Nuevos datos del usuario
+     * @returns {Promise<Usuario>} Usuario actualizado
+     */
     const updateProfile = useCallback(async (userData: UpdateUserDTO) => {
         if (!user) throw new Error('No user logged in');
         
@@ -180,8 +219,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
             console.error('Error updating profile:', error);
             throw error;
         }
-        }, [user, isClient]);
+    }, [user, isClient]);
 
+    /**
+     * Agrega un nuevo libro
+     * @param {LibroRequestDTO} libro - Datos del libro a agregar
+     */
     const agregarLibro = async (libro: LibroRequestDTO) => {
         try {
             const nuevoLibro = await LibroService.agregar(libro)
@@ -192,6 +235,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    /**
+     * Actualiza un libro existente
+     * @param {number} indice - Índice del libro a actualizar
+     * @param {LibroRequestDTO} libro - Nuevos datos del libro
+     */
     const actualizarLibro = async (indice: number, libro: LibroRequestDTO) => {
         try {
             const libroActualizado = await LibroService.actualizar(indice, libro)
@@ -206,6 +254,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    /**
+     * Elimina un libro
+     * @param {number} indice - Índice del libro a eliminar
+     */
     const eliminarLibro = async (indice: number) => {
         try {
             await LibroService.eliminar(indice)
@@ -242,6 +294,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     )
 }
 
+/**
+ * Hook personalizado para acceder al contexto de usuario
+ * @returns {UserContextType} Contexto de usuario
+ * @throws {Error} Si se usa fuera de un UserProvider
+ */
 export function useUser() {
     const context = useContext(UserContext)
     if (context === undefined) {

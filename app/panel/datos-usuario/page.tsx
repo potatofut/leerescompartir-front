@@ -6,8 +6,14 @@ import { useUser } from "../../context/UserContext"
 import { RegionService } from "../../../lib/regions"
 import { toast } from "react-hot-toast"
 
+/**
+ * Página de datos de usuario que permite ver y editar la información del perfil
+ * Incluye gestión de datos personales y ubicación geográfica
+ */
 export default function DatosUsuario() {
   const { user, updateProfile } = useUser()
+  
+  // Estados para datos geográficos
   const [continentes, setContinentes] = useState<string[]>([])
   const [paises, setPaises] = useState<string[]>([])
   const [provincias, setProvincias] = useState<string[]>([])
@@ -15,6 +21,7 @@ export default function DatosUsuario() {
   const [loading, setLoading] = useState(false)
   const [geoLoading, setGeoLoading] = useState(true)
 
+  // Estado del formulario con datos del usuario
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -29,11 +36,14 @@ export default function DatosUsuario() {
     imagen: ""
   })
 
-  // Cargar datos iniciales del usuario y geográficos
+  /**
+   * Carga los datos iniciales del usuario y la información geográfica
+   * Se ejecuta cuando el usuario está disponible
+   */
   useEffect(() => {
     if (!user) return
 
-    // Establecer datos básicos del usuario
+    // Inicializar formulario con datos del usuario
     setFormData({
       nombre: user.nombre || "",
       email: user.email || "",
@@ -48,6 +58,10 @@ export default function DatosUsuario() {
       imagen: user.imagen || ""
     })
 
+    /**
+     * Carga la información geográfica de forma secuencial
+     * Comienza con continentes y carga los datos dependientes según la selección
+     */
     const loadGeographicData = async () => {
       try {
         setGeoLoading(true)
@@ -89,7 +103,10 @@ export default function DatosUsuario() {
     loadGeographicData()
   }, [user])
 
-  // Manejar cambios en los selects geográficos
+  /**
+   * Maneja el cambio de continente y actualiza los países disponibles
+   * @param {React.ChangeEvent<HTMLSelectElement>} e - Evento del select
+   */
   const handleContinenteChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const continente = e.target.value
     setFormData(prev => ({
@@ -121,6 +138,10 @@ export default function DatosUsuario() {
     }
   }
 
+  /**
+   * Maneja el cambio de país y actualiza las provincias disponibles
+   * @param {React.ChangeEvent<HTMLSelectElement>} e - Evento del select
+   */
   const handlePaisChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pais = e.target.value
     setFormData(prev => ({
@@ -149,6 +170,10 @@ export default function DatosUsuario() {
     }
   }
 
+  /**
+   * Maneja el cambio de provincia y actualiza las ciudades disponibles
+   * @param {React.ChangeEvent<HTMLSelectElement>} e - Evento del select
+   */
   const handleProvinciaChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const provincia = e.target.value
     setFormData(prev => ({
@@ -178,11 +203,19 @@ export default function DatosUsuario() {
     }
   }
 
+  /**
+   * Maneja los cambios en los campos de texto del formulario
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>} e - Evento del input
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  /**
+   * Maneja el envío del formulario y actualiza los datos del usuario
+   * @param {React.FormEvent} e - Evento del formulario
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -210,6 +243,7 @@ export default function DatosUsuario() {
     }
   }
 
+  // Estado de carga inicial
   if (!user) {
     return <div>Cargando datos del usuario...</div>
   }
@@ -218,10 +252,12 @@ export default function DatosUsuario() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8 text-center text-orange-800">Datos de Usuario</h1>
 
+      {/* Contenedor principal del formulario */}
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-orange-200">
         <h2 className="text-2xl font-semibold mb-6 text-orange-700">Información personal</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Datos básicos del usuario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="nombre" className="block text-lg font-medium text-orange-900 mb-2">
@@ -255,8 +291,9 @@ export default function DatosUsuario() {
             </div>
           </div>
 
+          {/* Datos de ubicación */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Continente */}
+            {/* Selector de continente */}
             <div>
               <label htmlFor="continente" className="block text-lg font-medium text-orange-900 mb-2">
                 Continente
@@ -279,7 +316,7 @@ export default function DatosUsuario() {
               </select>
             </div>
 
-            {/* País */}
+            {/* Selector de país */}
             <div>
               <label htmlFor="pais" className="block text-lg font-medium text-orange-900 mb-2">
                 País
@@ -302,7 +339,7 @@ export default function DatosUsuario() {
               </select>
             </div>
 
-            {/* Provincia */}
+            {/* Selector de provincia */}
             <div>
               <label htmlFor="provincia" className="block text-lg font-medium text-orange-900 mb-2">
                 Provincia
@@ -325,7 +362,7 @@ export default function DatosUsuario() {
               </select>
             </div>
 
-            {/* Ciudad */}
+            {/* Selector de ciudad */}
             <div>
               <label htmlFor="ciudad" className="block text-lg font-medium text-orange-900 mb-2">
                 Ciudad
@@ -347,6 +384,8 @@ export default function DatosUsuario() {
                 ))}
               </select>
             </div>
+
+            {/* Código postal */}
             <div>
               <label htmlFor="cp" className="block text-lg font-medium text-orange-900 mb-2">
                 Código Postal
@@ -361,6 +400,7 @@ export default function DatosUsuario() {
               />
             </div>
 
+            {/* Teléfono */}
             <div>
               <label htmlFor="telefono" className="block text-lg font-medium text-orange-900 mb-2">
                 Teléfono
@@ -376,6 +416,7 @@ export default function DatosUsuario() {
             </div>
           </div>
 
+          {/* Biografía */}
           <div>
             <label htmlFor="biografia" className="block text-lg font-medium text-orange-900 mb-2">
               Biografía
@@ -391,6 +432,7 @@ export default function DatosUsuario() {
             />
           </div>
 
+          {/* Intereses */}
           <div>
             <label htmlFor="intereses" className="block text-lg font-medium text-orange-900 mb-2">
               Intereses de lectura
@@ -406,6 +448,7 @@ export default function DatosUsuario() {
             />
           </div>
 
+          {/* Botón de guardar */}
           <div className="flex justify-end">
             <button
               type="submit"

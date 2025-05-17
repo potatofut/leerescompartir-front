@@ -1,58 +1,75 @@
+/* Importación de las utilidades de Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Variables CSS para la paleta de colores principal */
 :root {
+  /* Color del texto principal (naranja oscuro) */
   --foreground-rgb: 124, 45, 18;
+  /* Color de inicio del gradiente de fondo (naranja muy claro) */
   --background-start-rgb: 255, 237, 213;
+  /* Color final del gradiente de fondo (naranja claro) */
   --background-end-rgb: 255, 247, 237;
 }
 
+/* Estilos base del cuerpo de la página */
 body {
+  /* Aplicación del color de texto principal */
   color: rgb(var(--foreground-rgb));
+  /* Gradiente de fondo que combina los colores definidos */
   background: linear-gradient(
       to bottom,
       transparent,
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  /* Fuente principal con fallbacks para diferentes sistemas */
   font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Estilos base para todos los encabezados */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
 }
 
+/* Estilos específicos para h1 */
 h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
   letter-spacing: -0.025em;
 }
 
+/* Estilos específicos para h2 */
 h2 {
   font-size: 2.25rem;
   margin-bottom: 0.75rem;
 }
 
+/* Estilos específicos para h3 */
 h3 {
   font-size: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
+/* Estilos base para enlaces */
 a {
   color: inherit;
   text-decoration: none;
 }
 
+/* Clase utilitaria para sombras de texto */
 .text-shadow {
   text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Clase base para botones con estilos comunes */
 .btn {
   @apply font-medium py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50;
 }
 
+/* Variante de botón primario con colores específicos */
 .btn-primary {
   @apply bg-orange-500 text-white hover:bg-orange-600 focus:ring-orange-500;
 }

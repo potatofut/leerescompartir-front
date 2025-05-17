@@ -9,8 +9,13 @@ import { AuthService } from "../../lib/auth"
 import { RegionService } from "../../lib/regions"
 import { toast } from "react-hot-toast"
 
+/**
+ * Página de registro de usuarios
+ * Permite crear una nueva cuenta con información personal y ubicación
+ * Incluye validación de formulario y carga dinámica de datos geográficos
+ */
 export default function Registro() {    
-    
+    // Estado del formulario con datos del usuario
     const [formData, setFormData] = useState({
         nombre: "",
         email: "",
@@ -21,18 +26,21 @@ export default function Registro() {
         continente: ""
     })
 
-    // State for geographical data (now as string arrays)
+    // Estados para datos geográficos
     const [continentes, setContinentes] = useState<string[]>([])
     const [paises, setPaises] = useState<string[]>([])
     const [provincias, setProvincias] = useState<string[]>([])
     const [ciudades, setCiudades] = useState<string[]>([])
     
+    // Estados de carga y navegación
     const [loading, setLoading] = useState(false)
     const [fetchingData, setFetchingData] = useState(false)
     const router = useRouter()
     const { login } = useUser()
 
-    // Fetch continents on component mount
+    /**
+     * Carga los continentes disponibles al montar el componente
+     */
     useEffect(() => {
         const fetchContinentes = async () => {
             try {
@@ -50,7 +58,10 @@ export default function Registro() {
         fetchContinentes()
     }, [])
 
-    // Fetch countries when continent changes
+    /**
+     * Carga los países cuando cambia el continente seleccionado
+     * Reinicia los campos dependientes (país, provincia, ciudad)
+     */
     useEffect(() => {
         const fetchPaises = async () => {
             if (!formData.continente) {
@@ -62,7 +73,7 @@ export default function Registro() {
                 setFetchingData(true)
                 const data = await RegionService.getPaisesPorContinente(formData.continente)
                 setPaises(data)
-                // Reset dependent fields
+                // Reiniciar campos dependientes
                 setFormData(prev => ({
                     ...prev,
                     pais: "",
@@ -80,7 +91,10 @@ export default function Registro() {
         fetchPaises()
     }, [formData.continente])
 
-    // Fetch provinces when country changes
+    /**
+     * Carga las provincias cuando cambia el país seleccionado
+     * Reinicia los campos dependientes (provincia, ciudad)
+     */
     useEffect(() => {
         const fetchProvincias = async () => {
             if (!formData.continente || !formData.pais) {
@@ -92,7 +106,7 @@ export default function Registro() {
                 setFetchingData(true)
                 const data = await RegionService.getProvinciasPorPais(formData.continente, formData.pais)
                 setProvincias(data)
-                // Reset dependent fields
+                // Reiniciar campos dependientes
                 setFormData(prev => ({
                     ...prev,
                     provincia: "",
@@ -109,7 +123,10 @@ export default function Registro() {
         fetchProvincias()
     }, [formData.continente, formData.pais])
 
-    // Fetch cities when province changes
+    /**
+     * Carga las ciudades cuando cambia la provincia seleccionada
+     * Reinicia el campo de ciudad
+     */
     useEffect(() => {
         const fetchCiudades = async () => {
             if (!formData.continente || !formData.pais || !formData.provincia) {
@@ -125,7 +142,7 @@ export default function Registro() {
                     formData.provincia
                 )
                 setCiudades(data)
-                // Reset dependent field
+                // Reiniciar campo dependiente
                 setFormData(prev => ({
                     ...prev,
                     ciudad: ""
@@ -141,11 +158,20 @@ export default function Registro() {
         fetchCiudades()
     }, [formData.continente, formData.pais, formData.provincia])
 
+    /**
+     * Maneja los cambios en los campos del formulario
+     * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - Evento del input/select
+     */
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { id, value } = e.target
         setFormData(prev => ({ ...prev, [id]: value }))
     }
 
+    /**
+     * Maneja el envío del formulario de registro
+     * Registra al usuario y lo autentica automáticamente
+     * @param {React.FormEvent} e - Evento del formulario
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
@@ -154,13 +180,13 @@ export default function Registro() {
           console.log("Payload enviado:", JSON.stringify(formData, null, 2))
           const userData = await AuthService.register(formData)
           
-          // After successful registration, log the user in
+          // Autenticar al usuario después del registro exitoso
           const loginResponse = await AuthService.login({
             email: formData.email,
             password: formData.password
           })
           
-          // Store the user data and token
+          // Almacenar datos del usuario y token
           localStorage.setItem('auth_token', loginResponse.id)
           login(loginResponse)
           
@@ -176,9 +202,11 @@ export default function Registro() {
 
     return (
         <div className="container mx-auto px-4 py-12">
+          {/* Contenedor del formulario */}
           <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-orange-200">
             <h2 className="text-3xl font-semibold mb-6 text-orange-700 text-center">Registro</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Campo de nombre */}
               <div>
                 <label htmlFor="nombre" className="block text-lg font-medium text-orange-900 mb-2">
                   Nombre
@@ -192,6 +220,8 @@ export default function Registro() {
                   required
                 />
               </div>
+
+              {/* Campo de email */}
               <div>
                 <label htmlFor="email" className="block text-lg font-medium text-orange-900 mb-2">
                   Email
@@ -205,6 +235,8 @@ export default function Registro() {
                   required
                 />
               </div>
+
+              {/* Campo de contraseña */}
               <div>
                 <label htmlFor="password" className="block text-lg font-medium text-orange-900 mb-2">
                   Contraseña
@@ -220,7 +252,7 @@ export default function Registro() {
                 />
               </div>
               
-              {/* Dropdown for Continente */}
+              {/* Selector de continente */}
               <div>
                 <label htmlFor="continente" className="block text-lg font-medium text-orange-900 mb-2">
                   Continente
@@ -241,7 +273,7 @@ export default function Registro() {
                 </select>
               </div>
               
-              {/* Dropdown for País */}
+              {/* Selector de país */}
               <div>
                 <label htmlFor="pais" className="block text-lg font-medium text-orange-900 mb-2">
                   País
@@ -263,7 +295,7 @@ export default function Registro() {
                 </select>
               </div>
               
-              {/* Dropdown for Provincia */}
+              {/* Selector de provincia */}
               <div>
                 <label htmlFor="provincia" className="block text-lg font-medium text-orange-900 mb-2">
                   Provincia
@@ -285,7 +317,7 @@ export default function Registro() {
                 </select>
               </div>
               
-              {/* Dropdown for Ciudad */}
+              {/* Selector de ciudad */}
               <div>
                 <label htmlFor="ciudad" className="block text-lg font-medium text-orange-900 mb-2">
                   Ciudad
@@ -307,6 +339,7 @@ export default function Registro() {
                 </select>
               </div>
               
+              {/* Botón de registro */}
               <button
                 type="submit"
                 className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition duration-300"

@@ -8,6 +8,10 @@ import { TematicaDTO, LibroDTO } from '../../lib/types'
 import { useSearchParams } from 'next/navigation'
 import { RegionService } from '../../lib/regions'
 
+/**
+ * Página principal de libros que muestra el catálogo disponible
+ * Incluye filtros por temática y ubicación, y permite solicitar reservas
+ */
 export default function Libros() {
   const { user, isLoggedIn, reservar, cargarLibros, cargarPrestamos } = useUser()
   const [temaSeleccionado, setTemaSeleccionado] = useState<string | null>(null)
@@ -26,6 +30,7 @@ export default function Libros() {
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("")
   const [ciudadSeleccionada, setCiudadSeleccionada] = useState<string>("")
 
+  // Cargar tema desde la URL si existe
   useEffect(() => {
     const temaFromUrl = searchParams.get('tema')
     if (temaFromUrl) {
@@ -33,20 +38,22 @@ export default function Libros() {
     }
   }, [searchParams])
 
+  // Cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        // Load themes
+        // Cargar temáticas
         const temasData = await LibroService.tematicas()
         setTemas(temasData)
 
-        // Load regions
+        // Cargar regiones
         const continentesData = await RegionService.getContinentes()
         setContinentes(continentesData)
 
-        // Load available books
+        // Cargar libros disponibles
         await cargarLibrosFiltrados()
 
+        // Cargar datos del usuario si está autenticado
         await cargarLibros();
         await cargarPrestamos();
 
@@ -60,6 +67,9 @@ export default function Libros() {
     cargarDatos()
   }, [])
 
+  /**
+   * Carga los libros filtrados según los criterios seleccionados
+   */
   const cargarLibrosFiltrados = async () => {
     try {
       const librosData = await LibroService.filtrar(
@@ -75,6 +85,10 @@ export default function Libros() {
     }
   }
 
+  /**
+   * Maneja el cambio de continente y actualiza los países disponibles
+   * @param {string} continente - Continente seleccionado
+   */
   const handleContinenteChange = async (continente: string) => {
     setContinenteSeleccionado(continente)
     setPaisSeleccionado("")
@@ -98,6 +112,10 @@ export default function Libros() {
     }
   }
 
+  /**
+   * Maneja el cambio de país y actualiza las provincias disponibles
+   * @param {string} pais - País seleccionado
+   */
   const handlePaisChange = async (pais: string) => {
     setPaisSeleccionado(pais)
     setProvinciaSeleccionada("")
@@ -119,6 +137,10 @@ export default function Libros() {
     }
   }
 
+  /**
+   * Maneja el cambio de provincia y actualiza las ciudades disponibles
+   * @param {string} provincia - Provincia seleccionada
+   */
   const handleProvinciaChange = async (provincia: string) => {
     setProvinciaSeleccionada(provincia)
     setCiudadSeleccionada("")
@@ -141,11 +163,18 @@ export default function Libros() {
     }
   }
 
+  /**
+   * Maneja el cambio de ciudad y actualiza los libros filtrados
+   * @param {string} ciudad - Ciudad seleccionada
+   */
   const handleCiudadChange = async (ciudad: string) => {
     setCiudadSeleccionada(ciudad)
     await cargarLibrosFiltrados()
   }
 
+  /**
+   * Limpia todos los filtros de región y actualiza la lista de libros
+   */
   const limpiarFiltrosRegion = async () => {
     setContinenteSeleccionado("")
     setPaisSeleccionado("")
@@ -157,6 +186,10 @@ export default function Libros() {
     await cargarLibrosFiltrados()
   }
 
+  /**
+   * Maneja la solicitud de reserva de un libro
+   * @param {LibroDTO} libro - Libro a reservar
+   */
   const handleSolicitarReserva = async (libro: LibroDTO) => {
     if (!user) return
     
@@ -168,7 +201,7 @@ export default function Libros() {
         })
         alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
         
-        // Refresh books after reservation
+        // Actualizar lista de libros después de la reserva
         await cargarLibrosFiltrados()
       } catch (error) {
         alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
@@ -182,6 +215,7 @@ export default function Libros() {
     ? librosDisponibles.filter((libro) => libro.tematicas.includes(temaSeleccionado))
     : librosDisponibles
 
+  // Estado de carga
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -198,6 +232,7 @@ export default function Libros() {
       <div className="mb-8 bg-white p-6 rounded-lg shadow-md border border-orange-200">
         <h2 className="text-xl font-semibold mb-4 text-orange-700">Filtrar por ubicación</h2>
         
+        {/* Grid de selectores de ubicación */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Selector de continente */}
           <div>
@@ -283,6 +318,7 @@ export default function Libros() {
           </div>
         </div>
 
+        {/* Botón para limpiar filtros */}
         {(continenteSeleccionado || paisSeleccionado || provinciaSeleccionada || ciudadSeleccionada) && (
           <div className="mt-4">
             <button
@@ -314,6 +350,7 @@ export default function Libros() {
             </div>
           ))}
         </div>
+        {/* Botón para mostrar todos los libros */}
         {temaSeleccionado && (
           <div className="mt-4 text-center">
             <button
@@ -326,6 +363,7 @@ export default function Libros() {
         )}
       </div>
 
+      {/* Lista de libros */}
       <div className="bg-white p-8 rounded-xl shadow-lg border border-orange-200">
         <h2 className="text-2xl font-semibold mb-6 text-orange-700">
           {temaSeleccionado
@@ -338,6 +376,7 @@ export default function Libros() {
           )}
         </h2>
 
+        {/* Mensaje cuando no hay libros */}
         {librosFiltrados.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-xl text-orange-900 mb-4">
@@ -353,16 +392,20 @@ export default function Libros() {
             <p className="text-orange-700">Vuelve más tarde o regístrate para compartir tus propios libros.</p>
           </div>
         ) : (
+          /* Grid de libros */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {librosFiltrados.map((libro) => (
               <div key={libro.titulo} className="bg-orange-50 p-6 rounded-lg shadow-md border border-orange-200">
+                {/* Imagen del libro */}
                 <div className="relative h-64 mb-4 rounded overflow-hidden">
                   <Image src={libro.portada || "/placeholder.svg"} alt={libro.titulo} layout="fill" objectFit="cover" />
                 </div>
+                {/* Información del libro */}
                 <h3 className="text-xl font-semibold mb-2 text-orange-800">{libro.titulo}</h3>
                 <p className="text-orange-900 mb-2">Autor: {libro.autor}</p>
                 <p className="text-orange-900 mb-4 line-clamp-2">{libro.descripcion}</p>
                 <div className="flex flex-col gap-2">
+                  {/* Estado y ubicación */}
                   <div className="flex items-center justify-between">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -384,12 +427,14 @@ export default function Libros() {
                     </span>
                   </div>
 
+                  {/* Información de reservas */}
                   {libro.reservas && libro.reservas.length > 0 && (
                     <p className="text-sm text-orange-900 mt-2">
                       <span className="font-medium">Reservas:</span> {libro.reservas.length}
                     </p>
                   )}
 
+                  {/* Botón de reserva */}
                   <div className="flex justify-between mt-2">
                     {isLoggedIn && user?.email !== libro.emailUsuario && libro.estado === "disponible" && (
                       <button

@@ -5,15 +5,23 @@ import Link from "next/link"
 import Image from "next/image"
 import { useUser } from "../context/UserContext"
 
+/**
+ * Componente UserMenu que muestra el menú desplegable del usuario
+ * Incluye la foto de perfil y opciones de navegación
+ * Se cierra automáticamente al hacer clic fuera del menú
+ */
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useUser()
   const menuRef = useRef<HTMLDivElement>(null)
   
-  // Default image to use if no user image is available
+  // Imagen por defecto si el usuario no tiene foto de perfil
   const userImage = user?.imagen || "/placeholder.svg?height=100&width=100"
 
-  // Cerrar el menú cuando se hace clic fuera de él
+  /**
+   * Maneja el cierre del menú al hacer clic fuera de él
+   * Utiliza un event listener para detectar clics en el documento
+   */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -29,6 +37,7 @@ export default function UserMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
+      {/* Botón de perfil con imagen */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center focus:outline-none"
@@ -45,8 +54,10 @@ export default function UserMenu() {
         </div>
       </button>
 
+      {/* Menú desplegable */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 border border-orange-200">
+          {/* Enlaces de navegación del usuario */}
           <Link href="/panel" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
             Mi perfil
           </Link>
@@ -59,7 +70,11 @@ export default function UserMenu() {
           <Link href="/panel/datos-usuario" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
             Datos personales
           </Link>
+          
+          {/* Separador */}
           <div className="border-t border-orange-200 my-1"></div>
+          
+          {/* Opción de cierre de sesión */}
           <Link href="/logout" className="block px-4 py-2 text-orange-900 hover:bg-orange-100">
             Cerrar sesión
           </Link>

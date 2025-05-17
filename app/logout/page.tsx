@@ -4,32 +4,40 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "../context/UserContext"
 
+/**
+ * Página de cierre de sesión que maneja el proceso de logout
+ * Se ejecuta automáticamente al cargar y redirige al inicio
+ */
 export default function Logout() {
   const router = useRouter()
   const { logout } = useUser()
 
   useEffect(() => {
-    // Definir una función para gestionar el logout
+    /**
+     * Función que maneja el proceso de cierre de sesión
+     * Ejecuta el logout y redirige al usuario al inicio
+     */
     const handleLogout = async () => {
       try {
-        // Cerrar sesión
+        // Ejecutar el proceso de cierre de sesión
         logout()
         
-        // Redirigir al inicio
+        // Redirigir al usuario a la página principal
         router.push("/")
       } catch (error) {
         console.error("Error durante el cierre de sesión:", error)
-        // Redirigir al inicio incluso si hay un error
+        // Asegurar la redirección incluso si hay un error
         router.push("/")
       }
     }
     
-    // Llamar a la función de logout
+    // Ejecutar el proceso de logout inmediatamente
     handleLogout()
   }, [logout, router])
 
   return (
     <div className="container mx-auto px-4 py-12 text-center">
+      {/* Mensaje de estado durante el cierre de sesión */}
       <p>Cerrando sesión...</p>
     </div>
   )

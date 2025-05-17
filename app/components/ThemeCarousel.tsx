@@ -9,12 +9,18 @@ import { LibroService } from '../../lib/libros'
 import { TematicaDTO } from '../../lib/types'
 import { useRouter } from 'next/navigation'
 
+/**
+ * Componente ThemeCarousel que muestra un carrusel de temáticas de libros
+ * Permite navegar entre diferentes categorías de libros
+ * Incluye funcionalidad de autoplay y diseño responsive
+ */
 export default function ThemeCarousel() {
   const [tematicas, setTematicas] = useState<TematicaDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  // Carga las temáticas al montar el componente
   useEffect(() => {
     const fetchTematicas = async () => {
       try {
@@ -31,10 +37,15 @@ export default function ThemeCarousel() {
     fetchTematicas()
   }, [])
 
+  /**
+   * Maneja el clic en una temática, redirigiendo a la página de libros filtrada
+   * @param {string} tematicaId - ID de la temática seleccionada
+   */
   const handleTematicaClick = (tematicaId: string) => {
     router.push(`/libros?tema=${tematicaId}`)
   }
 
+  // Configuración del carrusel
   const settings = {
     dots: true,
     infinite: true,
@@ -61,6 +72,7 @@ export default function ThemeCarousel() {
     ]
   }
 
+  // Estados de carga y error
   if (loading) {
     return <div className="text-center py-8">Cargando temáticas...</div>
   }
@@ -79,6 +91,7 @@ export default function ThemeCarousel() {
       <Slider {...settings}>
         {tematicas.map((tematica) => (
           <div key={tematica.id} className="px-2">
+            {/* Tarjeta de temática con imagen y overlay */}
             <div 
               className="relative h-64 rounded-xl overflow-hidden shadow-lg cursor-pointer"
               onClick={() => handleTematicaClick(tematica.id)}
@@ -89,6 +102,7 @@ export default function ThemeCarousel() {
                 layout="fill"
                 objectFit="cover"
               />
+              {/* Overlay con el nombre de la temática */}
               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <h3 className="text-white text-2xl font-bold">{tematica.nombre}</h3>
               </div>
