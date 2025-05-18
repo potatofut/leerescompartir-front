@@ -32,29 +32,6 @@ export default function Home() {
       {/* Carrusel de temas disponibles */}
       <ThemeCarousel />
 
-      {/* Sección de muestra de la colección de libros */}
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-orange-200">
-        <h2 className="text-3xl font-semibold mb-8 text-orange-700 text-center">Nuestra Colección</h2>
-        {/* Grid de imágenes de libros con efecto hover */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-          ].map((src, i) => (
-            // Contenedor de cada imagen de libro con efectos de hover
-            <div key={i} className="relative h-64 rounded-lg overflow-hidden shadow-md transition duration-300 ease-in-out hover:shadow-xl">
-              <Image
-                src={src}
-                alt={`Portada de libro ${i + 1}`}
-                layout="fill"
-                objectFit="cover"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

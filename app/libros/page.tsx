@@ -30,7 +30,6 @@ export default function Libros() {
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("")
   const [ciudadSeleccionada, setCiudadSeleccionada] = useState<string>("")
 
-  // Cargar tema desde la URL si existe
   useEffect(() => {
     const temaFromUrl = searchParams.get('tema')
     if (temaFromUrl) {
@@ -40,156 +39,146 @@ export default function Libros() {
 
   // Cargar datos iniciales
   useEffect(() => {
-    const cargarDatos = async () => {
+    const cargarDatosIniciales = async () => {
       try {
-        // Cargar temáticas
+        // Load themes
         const temasData = await LibroService.tematicas()
         setTemas(temasData)
 
-        // Cargar regiones
+        // Load regions
         const continentesData = await RegionService.getContinentes()
         setContinentes(continentesData)
 
-        // Cargar libros disponibles
-        await cargarLibrosFiltrados()
-
-        // Cargar datos del usuario si está autenticado
-        await cargarLibros();
-        await cargarPrestamos();
+        // Load books and loans
+        await cargarLibros()
+        await cargarPrestamos()
 
       } catch (error) {
-        console.error("Error loading data:", error)
+        console.error("Error loading initial data:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    cargarDatos()
+    cargarDatosIniciales()
   }, [])
 
-  /**
-   * Carga los libros filtrados según los criterios seleccionados
-   */
-  const cargarLibrosFiltrados = async () => {
-    try {
-      const librosData = await LibroService.filtrar(
-        undefined, // tematicaId
-        "disponible", // estado
-        paisSeleccionado || undefined,
-        provinciaSeleccionada || undefined,
-        ciudadSeleccionada || undefined
-      )
-      setLibrosDisponibles(librosData)
-    } catch (error) {
-      console.error("Error loading filtered books:", error)
+  // Efecto para cargar países cuando cambia el continente
+  useEffect(() => {
+    if (!continenteSeleccionado) {
+      setPaises([])
+      setPaisSeleccionado("")
+      return
     }
-  }
 
-  /**
-   * Maneja el cambio de continente y actualiza los países disponibles
-   * @param {string} continente - Continente seleccionado
-   */
-  const handleContinenteChange = async (continente: string) => {
-    setContinenteSeleccionado(continente)
-    setPaisSeleccionado("")
-    setProvinciaSeleccionada("")
-    setCiudadSeleccionada("")
-    
-    if (continente) {
+    const cargarPaises = async () => {
       try {
-        const paisesData = await RegionService.getPaisesPorContinente(continente)
+        const paisesData = await RegionService.getPaisesPorContinente(continenteSeleccionado)
         setPaises(paisesData)
-        setProvincias([])
-        setCiudades([])
       } catch (error) {
         console.error("Error loading countries:", error)
       }
-    } else {
-      setPaises([])
-      setProvincias([])
-      setCiudades([])
-      await cargarLibrosFiltrados()
     }
-  }
 
-  /**
-   * Maneja el cambio de país y actualiza las provincias disponibles
-   * @param {string} pais - País seleccionado
-   */
-  const handlePaisChange = async (pais: string) => {
-    setPaisSeleccionado(pais)
-    setProvinciaSeleccionada("")
-    setCiudadSeleccionada("")
-    
-    if (pais && continenteSeleccionado) {
+    cargarPaises()
+  }, [continenteSeleccionado])
+
+  // Efecto para cargar provincias cuando cambia el país
+  useEffect(() => {
+    if (!paisSeleccionado || !continenteSeleccionado) {
+      setProvincias([])
+      setProvinciaSeleccionada("")
+      return
+    }
+
+    const cargarProvincias = async () => {
       try {
-        const provinciasData = await RegionService.getProvinciasPorPais(continenteSeleccionado, pais)
+        const provinciasData = await RegionService.getProvinciasPorPais(
+          continenteSeleccionado, 
+          paisSeleccionado
+        )
         setProvincias(provinciasData)
-        setCiudades([])
-        await cargarLibrosFiltrados()
       } catch (error) {
         console.error("Error loading provinces:", error)
       }
-    } else {
-      setProvincias([])
-      setCiudades([])
-      await cargarLibrosFiltrados()
     }
-  }
 
-  /**
-   * Maneja el cambio de provincia y actualiza las ciudades disponibles
-   * @param {string} provincia - Provincia seleccionada
-   */
-  const handleProvinciaChange = async (provincia: string) => {
-    setProvinciaSeleccionada(provincia)
-    setCiudadSeleccionada("")
-    
-    if (provincia && continenteSeleccionado && paisSeleccionado) {
+    cargarProvincias()
+  }, [paisSeleccionado, continenteSeleccionado])
+
+  // Efecto para cargar ciudades cuando cambia la provincia
+  useEffect(() => {
+    if (!provinciaSeleccionada || !paisSeleccionado || !continenteSeleccionado) {
+      setCiudades([])
+      setCiudadSeleccionada("")
+      return
+    }
+
+    const cargarCiudades = async () => {
       try {
         const ciudadesData = await RegionService.getCiudadesPorProvincia(
           continenteSeleccionado, 
           paisSeleccionado, 
-          provincia
+          provinciaSeleccionada
         )
         setCiudades(ciudadesData)
-        await cargarLibrosFiltrados()
       } catch (error) {
         console.error("Error loading cities:", error)
       }
-    } else {
-      setCiudades([])
-      await cargarLibrosFiltrados()
     }
+
+    cargarCiudades()
+  }, [provinciaSeleccionada, paisSeleccionado, continenteSeleccionado])
+
+  // Efecto principal para filtrar libros cuando cambian las selecciones
+  useEffect(() => {
+    const cargarLibrosFiltrados = async () => {
+      try {
+        const librosData = await LibroService.filtrar(
+          undefined, // tematicaId
+          "disponible", // estado
+          paisSeleccionado || undefined,
+          provinciaSeleccionada || undefined,
+          ciudadSeleccionada || undefined
+        )
+        setLibrosDisponibles(librosData)
+      } catch (error) {
+        console.error("Error loading filtered books:", error)
+      }
+    }
+
+    cargarLibrosFiltrados()
+  }, [paisSeleccionado, provinciaSeleccionada, ciudadSeleccionada])
+
+  const handleContinenteChange = (continente: string) => {
+    setContinenteSeleccionado(continente)
+    setPaisSeleccionado("")
+    setProvinciaSeleccionada("")
+    setCiudadSeleccionada("")
   }
 
-  /**
-   * Maneja el cambio de ciudad y actualiza los libros filtrados
-   * @param {string} ciudad - Ciudad seleccionada
-   */
-  const handleCiudadChange = async (ciudad: string) => {
+  const handlePaisChange = (pais: string) => {
+    setPaisSeleccionado(pais)
+    setProvinciaSeleccionada("")
+    setCiudadSeleccionada("")
+  }
+
+  const handleProvinciaChange = (provincia: string) => {
+    setProvinciaSeleccionada(provincia)
+    setCiudadSeleccionada("")
+  }
+
+  const handleCiudadChange = (ciudad: string) => {
     setCiudadSeleccionada(ciudad)
-    await cargarLibrosFiltrados()
   }
 
-  /**
-   * Limpia todos los filtros de región y actualiza la lista de libros
-   */
-  const limpiarFiltrosRegion = async () => {
+  const limpiarFiltrosRegion = () => {
     setContinenteSeleccionado("")
     setPaisSeleccionado("")
     setProvinciaSeleccionada("")
     setCiudadSeleccionada("")
-    setPaises([])
-    setProvincias([])
-    setCiudades([])
-    await cargarLibrosFiltrados()
   }
 
-  /**
-   * Maneja la solicitud de reserva de un libro
-   * @param {LibroDTO} libro - Libro a reservar
-   */
   const handleSolicitarReserva = async (libro: LibroDTO) => {
     if (!user) return
     
@@ -201,8 +190,15 @@ export default function Libros() {
         })
         alert("¡Reserva solicitada con éxito! El propietario del libro se pondrá en contacto contigo.")
         
-        // Actualizar lista de libros después de la reserva
-        await cargarLibrosFiltrados()
+        // Refresh books after reservation
+        const librosData = await LibroService.filtrar(
+          undefined,
+          "disponible",
+          paisSeleccionado || undefined,
+          provinciaSeleccionada || undefined,
+          ciudadSeleccionada || undefined
+        )
+        setLibrosDisponibles(librosData)
       } catch (error) {
         alert("Error al solicitar la reserva. Por favor, inténtalo de nuevo.")
         console.error("Reservation error:", error)
@@ -215,7 +211,6 @@ export default function Libros() {
     ? librosDisponibles.filter((libro) => libro.tematicas.includes(temaSeleccionado))
     : librosDisponibles
 
-  // Estado de carga
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
