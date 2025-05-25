@@ -69,5 +69,10 @@ export const AuthService = {
   logout: (): void => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+  },
+
+  verifyEmail: async (token: string): Promise<string> => {
+    const response = await api.get(`/api/usuarios/verificar?token=${token}`);
+    return response.data;
   }
 };

@@ -169,7 +169,7 @@ export default function Registro() {
 
     /**
      * Maneja el envío del formulario de registro
-     * Registra al usuario y lo autentica automáticamente
+     * Registra al usuario 
      * @param {React.FormEvent} e - Evento del formulario
      */
     const handleSubmit = async (e: React.FormEvent) => {
@@ -178,20 +178,20 @@ export default function Registro() {
         try {
           setLoading(true)
           console.log("Payload enviado:", JSON.stringify(formData, null, 2))
-          const userData = await AuthService.register(formData)
+          await AuthService.register(formData)
           
-          // Autenticar al usuario después del registro exitoso
-          const loginResponse = await AuthService.login({
-            email: formData.email,
-            password: formData.password
-          })
+          toast.success(
+              <div>
+                  <p>¡Registro completado con éxito!</p>
+                  <p>Por favor verifica tu email haciendo clic en el enlace que te hemos enviado.</p>
+                  <p>Si no lo encuentras, revisa tu carpeta de spam.</p>
+              </div>,
+              { duration: 10000 } // Show for 10 seconds
+          )
           
-          // Almacenar datos del usuario y token
-          localStorage.setItem('auth_token', loginResponse.id)
-          login(loginResponse)
+          // Redirect to login page instead of logging in automatically
+          router.push("/login")
           
-          toast.success("Registro completado con éxito")
-          router.push("/panel")
         } catch (error) {
           console.error("Registration error:", error)
           toast.error("Error al registrarse. Por favor, inténtalo de nuevo.")
