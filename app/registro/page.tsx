@@ -167,11 +167,6 @@ export default function Registro() {
         setFormData(prev => ({ ...prev, [id]: value }))
     }
 
-    /**
-     * Maneja el envío del formulario de registro
-     * Registra al usuario 
-     * @param {React.FormEvent} e - Evento del formulario
-     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
@@ -180,14 +175,15 @@ export default function Registro() {
           console.log("Payload enviado:", JSON.stringify(formData, null, 2))
           await AuthService.register(formData)
           
-          toast.success(
-              <div>
-                  <p>¡Registro completado con éxito!</p>
-                  <p>Por favor verifica tu email haciendo clic en el enlace que te hemos enviado.</p>
-                  <p>Si no lo encuentras, revisa tu carpeta de spam.</p>
-              </div>,
-              { duration: 10000 } // Show for 10 seconds
-          )
+          // After successful registration, log the user in
+          const loginResponse = await AuthService.login({
+            email: formData.email,
+            password: formData.password
+          })
+          
+          // Store the user data and token
+          localStorage.setItem('auth_token', loginResponse.id)
+          login(loginResponse)
           
           // Redirect to login page instead of logging in automatically
           router.push("/login")
