@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Image from "next/image"
 import { useUser } from "../context/UserContext"
 import { LibroService } from '../../lib/libros'
@@ -8,11 +8,12 @@ import { TematicaDTO, LibroDTO } from '../../lib/types'
 import { useSearchParams } from 'next/navigation'
 import { RegionService } from '../../lib/regions'
 
+export const dynamic = 'force-dynamic';
+
 /**
- * Página principal de libros que muestra el catálogo disponible
- * Incluye filtros por temática y ubicación, y permite solicitar reservas
+ * Component that handles search params logic
  */
-export default function Libros() {
+function LibrosContent() {
   const { user, isLoggedIn, reservar, cargarLibros, cargarPrestamos } = useUser()
   const [temaSeleccionado, setTemaSeleccionado] = useState<string | null>(null)
   const [temas, setTemas] = useState<TematicaDTO[]>([])
@@ -29,6 +30,11 @@ export default function Libros() {
   const [paisSeleccionado, setPaisSeleccionado] = useState<string>("")
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("")
   const [ciudadSeleccionada, setCiudadSeleccionada] = useState<string>("")
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   useEffect(() => {
     const temaFromUrl = searchParams.get('tema')
@@ -211,7 +217,7 @@ export default function Libros() {
     ? librosDisponibles.filter((libro) => libro.tematicas.includes(temaSeleccionado))
     : librosDisponibles
 
-  if (loading) {
+  if (typeof window === 'undefined' || loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <p>Cargando libros disponibles...</p>
@@ -447,5 +453,28 @@ export default function Libros() {
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Loading component for Suspense fallback
+ */
+function LibrosLoading() {
+  return (
+    <div className="container mx-auto px-4 py-12 text-center">
+      <p>Cargando libros disponibles...</p>
+    </div>
+  )
+}
+
+/**
+ * Página principal de libros que muestra el catálogo disponible
+ * Incluye filtros por temática y ubicación, y permite solicitar reservas
+ */
+export default function Libros() {
+  return (
+    <Suspense fallback={<LibrosLoading />}>
+      <LibrosContent />
+    </Suspense>
   )
 }
