@@ -1,33 +1,28 @@
-# Leer es compartir - Frontend
 
-![Slogan](https://img.shields.io/badge/Slogan-Comparte_tus_libros_favoritos-blue)
+Leer es compartir - Frontend
+Slogan
 
-Frontend de la aplicación web "Leer es compartir", una plataforma para compartir libros entre lectores. Este proyecto proporciona la interfaz de usuario para interactuar con el [backend](https://github.com/potatofut/leer-es-compartir).
+Frontend de la aplicación web "Leer es compartir", una plataforma para compartir libros entre lectores. Este proyecto proporciona la interfaz de usuario para interactuar con el backend.
 
-## 📖 Descripción
-
+📖 Descripción
 "Leer es compartir" es una comunidad donde los usuarios pueden:
-- Compartir los libros que ya han leído
-- Descubrir nuevas historias
-- Prestar y reservar libros de otros usuarios
-- Explorar libros por temáticas y ubicaciones
 
-**Slogan:** *Comparte tus libros favoritos. Únete a nuestra comunidad de lectores y comparte los libros que ya has leído. Descubre nuevas historias y permite que otros disfruten de tus lecturas favoritas.*
+Compartir los libros que ya han leído
+Descubrir nuevas historias
+Prestar y reservar libros de otros usuarios
+Explorar libros por temáticas y ubicaciones
+Slogan: Comparte tus libros favoritos. Únete a nuestra comunidad de lectores y comparte los libros que ya has leído. Descubre nuevas historias y permite que otros disfruten de tus lecturas favoritas.
 
-## 🛠️ Tecnologías
-
-- **Next.js 15.2.4** (Framework React)
-- **React 19** (Biblioteca UI)
-- **Tailwind CSS** (Estilos)
-- **Radix UI** (Componentes accesibles)
-- **Axios** (Cliente HTTP)
-- **React Hook Form** + **Zod** (Formularios y validación)
-- **Next Themes** (Soporte para modo oscuro/claro)
-- **Sonner** (Notificaciones)
-
-## 📂 Estructura del proyecto
-
-```
+🛠️ Tecnologías
+Next.js 15.2.4 (Framework React)
+React 19 (Biblioteca UI)
+Tailwind CSS (Estilos)
+Radix UI (Componentes accesibles)
+Axios (Cliente HTTP)
+React Hook Form + Zod (Formularios y validación)
+Next Themes (Soporte para modo oscuro/claro)
+Sonner (Notificaciones)
+📂 Estructura del proyecto
 .
 ├── app/
 │   ├── buscar/                  # Página de búsqueda de libros
@@ -51,71 +46,61 @@ Frontend de la aplicación web "Leer es compartir", una plataforma para comparti
 │   └── regions.ts               # Servicios de regiones
 ├── public/                      # Assets estáticos
 └── styles/                      # Estilos globales
-```
+✨ Características principales
+Autenticación de usuarios: Registro, inicio de sesión y gestión de perfiles
+Gestión de libros: Añadir, editar y eliminar libros
+Sistema de préstamos: Reservar y devolver libros
+Búsqueda avanzada: Filtrado por título, autor, temática y ubicación
+Diseño responsive: Adaptable a diferentes dispositivos
+🚀 Instalación y ejecución
+Requisitos previos
+Node.js 18+
+npm/pnpm/yarn
+1. Configuración local
+Clonar el repositorio:
 
-## ✨ Características principales
+git clone https://github.com/potatofut/biblioteca-prestamos.git
+cd biblioteca-prestamos
+Instalar dependencias:
 
-- **Autenticación de usuarios**: Registro, inicio de sesión y gestión de perfiles
-- **Gestión de libros**: Añadir, editar y eliminar libros
-- **Sistema de préstamos**: Reservar y devolver libros
-- **Búsqueda avanzada**: Filtrado por título, autor, temática y ubicación
-- **Diseño responsive**: Adaptable a diferentes dispositivos
+npm install
+# o
+pnpm install
+# o
+yarn install
+Configurar variables de entorno: Crear un archivo .env.local basado en .env.example con la URL del backend:
 
-## 🚀 Instalación y ejecución
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+Ejecutar la aplicación:
 
-### Requisitos previos
-- Node.js 18+
-- npm/pnpm/yarn
+npm run dev
+# o
+pnpm dev
+# o
+yarn dev
+La aplicación estará disponible en http://localhost:3000.
 
-### 1. Configuración local
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/potatofut/biblioteca-prestamos.git
-   cd biblioteca-prestamos
-   ```
 
-2. Instalar dependencias:
-   ```bash
-   npm install
-   # o
-   pnpm install
-   # o
-   yarn install
-   ```
+🌐 Despliegue
 
-3. Configurar variables de entorno:
-   Crear un archivo `.env.local` basado en `.env.example` con la URL del backend:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8080/api
-   ```
+Esta aplicación está desplegada públicamente en:
 
-4. Ejecutar la aplicación:
-   ```bash
-   npm run dev
-   # o
-   pnpm dev
-   # o
-   yarn dev
-   ```
+🔗 https://www.leerescompartir.com
 
-La aplicación estará disponible en `http://localhost:3000`.
+Puedes acceder directamente para explorar, buscar y compartir libros con la comunidad de lectores.
 
-## 🧪 Pruebas
+🧪 Pruebas
 Ejecutar las pruebas con:
-```bash
+
 npm test
 # o
 pnpm test
 # o
 yarn test
-```
-
-## 🤝 Contribución
+🤝 Contribución
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request.
 
-## 📄 Licencia
-Este proyecto está bajo la licencia MIT. Ver el archivo `LICENSE` para más detalles.
+📄 Licencia
+Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
 
----
-
-**"Comparte tus libros favoritos"** - Conectando lectores a través de las páginas.
+"Comparte tus libros favoritos" - Conectando lectores a través de las páginas.
