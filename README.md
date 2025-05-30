@@ -104,3 +104,4 @@ Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull re
 Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
 
 "Comparte tus libros favoritos" - Conectando lectores a través de las páginas.
+
